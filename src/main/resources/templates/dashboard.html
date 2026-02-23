@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>BCC Music Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to your BCC Music Dashboard</h1>
+
+	<p th:if="${username}">
+	    Logged in as: <span th:text="${username}"></span>
+	</p>
+	
+	<p th:unless="${username}">
+	    You are not logged in (this should not happen).
+	</p>
+
+    <p>You can now browse, search, and manage your scores.</p>
+
+    <a href="/logout">Logout</a>
+</body>
+</html>

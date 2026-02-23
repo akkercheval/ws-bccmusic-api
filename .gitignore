@@ -1,0 +1,43 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# Compiled classes
+target/
+*.class
+
+# Maven / Gradle wrapper
+.mvn/
+mvnw
+mvnw.cmd
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+# Logs and temp files
+*.log
+
+### VS Code ###
+.vscode/
+
+### protect private data when committing to github ###
+src/main/resources/application.yaml
+src/main/resources/application-*.yaml
+src/main/resources/application-*.yml
+application-local.yaml
+application-dev.yaml
+application-prod.yaml
