@@ -41,3 +41,4 @@ src/main/resources/application-*.yml
 application-local.yaml
 application-dev.yaml
 application-prod.yaml
+/.apt_generated_tests/

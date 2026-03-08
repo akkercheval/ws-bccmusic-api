@@ -68,7 +68,7 @@ public class Score extends AuditEntity {
 	private List<ScoreComposer> scoreComposers = new ArrayList<>();	
 	
 	@OneToMany(mappedBy = "score", cascade = CascadeType.ALL, orphanRemoval = true)
-	@OrderBy("instrument, partNumber")
+	@OrderBy("instrument")
 	private List<Part> parts = new ArrayList<>();
 	
 	@OneToMany(mappedBy="score", cascade = CascadeType.ALL, orphanRemoval = true)

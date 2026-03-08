@@ -23,8 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class ComposerController {
 	
-	ComposerService composerService;
-	ModelMapper modelMapper;
+	private final ComposerService composerService;
+	private final ModelMapper modelMapper;
 	
 	@GetMapping(value = "/{composerId}")
 	public Composer getComposer(@PathVariable Long composerId) {
@@ -44,7 +44,10 @@ public class ComposerController {
 
 	@PostMapping
 	public Composer createNewComposer(@Valid @RequestBody Composer newComposer) {
-		
+	    log.info("New Composer: firstName={}, middleName={}, lastName={}", 
+	             newComposer.getFirstName(), 
+	             newComposer.getMiddleName(), 
+	             newComposer.getLastName());
 		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Composer newComposerEntity = modelMapper.map(newComposer, cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Composer.class);
 		return modelMapper.map(composerService.createComposer(newComposerEntity), Composer.class);
 	}

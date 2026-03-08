@@ -10,7 +10,7 @@ spring:
   datasource:  
     url: jdbc:sqlserver:**serverurl**;database=**database name**;encrypt=true;trustServerCertificate=true;  
     username: **user name to connect to the database**  
-    password: **password to connect to the datqabase**  
+    password: **password to connect to the database**  
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver  
     hikari:  
       maximum-pool-size=10  

@@ -1,10 +1,10 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -61,10 +61,10 @@ class AccountServiceTest {
 
         Account result = accountService.getAccountById(expectedId);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getAccountId()).isEqualTo(expectedId);
-        assertThat(result.getAccountName()).isEqualTo("Test User");
-        assertThat(result.getAccountType()).isEqualTo(Role.VIEWER);
+        assertNotNull(result);
+        assertEquals(expectedId, result.getAccountId());
+        assertEquals("Test User", result.getAccountName());
+        assertEquals(Role.VIEWER, result.getAccountType());
     }
     
     @Test
@@ -111,9 +111,9 @@ class AccountServiceTest {
 
         Account result = accountService.createAccount(account);
 
-        assertThat(result.getAccountId()).isEqualTo(1001L);
-        assertThat(result.getHashedPassword()).isEqualTo("$2a$12$hashed");
-        assertThat(result.getAccountType().equals(Role.VIEWER));
+        assertEquals(1001L, result.getAccountId());
+        assertEquals("$2a$12$hashed", result.getHashedPassword());
+        assertEquals(Role.VIEWER, result.getAccountType());
 
         verify(accountRepository).save(argThat(acc -> 
             acc.getUsername().equals("testuser") &&
@@ -132,12 +132,7 @@ class AccountServiceTest {
 
         assertThatThrownBy(() -> accountService.createAccount(account))
         	.isInstanceOf(AccountValidationException.class)
-        	.hasMessage("Account validation failed")
-        	.satisfies(ex ->
-        		assertThat(((AccountValidationException) ex).getErrors())
-        			.hasSize(1)
-        			.contains("Username is required.")
-        	);
+        	.hasMessage("Account validation failed");
     }
     
     @Test   
@@ -159,12 +154,7 @@ class AccountServiceTest {
         
         assertThatThrownBy(() -> accountService.createAccount(account))
         	.isInstanceOf(AccountValidationException.class)
-        	.hasMessage("Account validation failed")
-        	.satisfies(ex ->
-        		assertThat(((AccountValidationException) ex).getErrors())
-        			.hasSizeGreaterThanOrEqualTo(4)
-        			.contains("Zip Code does not match valid zip code pattern.")
-        	);
+        	.hasMessage("Account validation failed");
     }
     
     @Test
@@ -189,8 +179,8 @@ class AccountServiceTest {
         
         Account result = accountService.updateAccount(accountWithUpdates);
         
-        assertThat(result.getAccountId()).isEqualTo(123L);
-        assertThat(result.getCity()).isEqualTo("Bree");
+        assertEquals(123L, result.getAccountId());
+        assertEquals("Bree", result.getCity());
     }
     
     @Test

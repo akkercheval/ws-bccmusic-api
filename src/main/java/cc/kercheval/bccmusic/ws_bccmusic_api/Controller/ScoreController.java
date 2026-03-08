@@ -2,6 +2,8 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
@@ -41,13 +43,19 @@ public class ScoreController {
 	
 	@GetMapping
 	public List<MusicScore> getAllScores() {
-		return scoreService.getAllScores(); 
+		List<Score> allScores = scoreService.getAllScores();
+		
+		List<MusicScore> allMusicScores = 
+		StreamSupport.stream(allScores.spliterator(), false)
+        .map(s -> modelMapper.map(s, MusicScore.class))
+        .toList();
+		return allMusicScores;
 	}
 	
 	@GetMapping(value = "/{scoreId}")
 	public MusicScore getScoreById(@PathVariable Long scoreId) {
 		
-		return scoreService.getScoreById(scoreId);
+		return modelMapper.map(scoreService.getScoreById(scoreId), MusicScore.class);
 	}
 	
 	@GetMapping(value = "/search")
@@ -63,14 +71,20 @@ public class ScoreController {
     public List<MusicScore> getMyScores(Principal principal) {
 
         Long accountId = getAccountFromPrincipal(principal).getAccountId();
-        return scoreService.getScoresByAccountId(accountId);
+        return scoreService.getScoresByAccountId(accountId).stream()
+				.map(s ->
+				modelMapper.map(s, MusicScore.class))
+			.collect(Collectors.toList());
     }
 	
 	@GetMapping("/other-scores")
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasViewScoresPermission(#accountId, authentication)")
 	public List<MusicScore> getScoresByAccountId(@RequestParam(required = true) Long accountId, Principal principal) {
 	
-		return scoreService.getScoresByAccountId(accountId);
+		return scoreService.getScoresByAccountId(accountId).stream()
+				.map(s ->
+				modelMapper.map(s, MusicScore.class))
+			.collect(Collectors.toList());
 	}
 	
 	@PostMapping
@@ -88,8 +102,10 @@ public class ScoreController {
 	public MusicScore updateScore(@PathVariable Long scoreId, @Valid @RequestBody MusicScore score) {
 		if (!scoreId.equals(score.getScoreId())) {
             throw new IllegalArgumentException("Score ID in path must match body");
-        }		
-		return scoreService.updateScore(score);
+        }	
+		Score scoreEntity = modelMapper.map(score, Score.class);
+		
+		return modelMapper.map(scoreService.updateScore(scoreEntity), MusicScore.class);
 	}
 	
 	@DeleteMapping("/{scoreId}")

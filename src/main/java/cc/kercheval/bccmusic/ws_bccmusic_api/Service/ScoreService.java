@@ -3,10 +3,7 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -18,7 +15,6 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreSpecification;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.ScoreValidationException;
-import cc.kercheval.bccmusic.ws_bccmusic_api.Model.MusicScore;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.ScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -32,28 +28,18 @@ public class ScoreService {
 	
 	private final ScoreRepository scoreRepository;
 	private final AccountRepository accountRepository;
-	private final ModelMapper modelMapper;
 
-	public MusicScore getScoreById(Long scoreId) {
+	public Score getScoreById(Long scoreId) {
 		return scoreRepository.findById(scoreId)
-                .map(score -> modelMapper.map(score, MusicScore.class))
                 .orElseThrow(() -> new EntityNotFoundException("Score not found with id: " + scoreId));
 	}
 
-	public List<MusicScore> getAllScores() {
-		return StreamSupport.stream(scoreRepository.findAll().spliterator(), false)
-                .map(s -> modelMapper.map(s, MusicScore.class))
-                .toList();
+	public List<Score> getAllScores() {
+		return scoreRepository.findAll();
 	}
 
-	public List<MusicScore> getScoresByAccountId(Long accountId) {
-		List<Score> scores = scoreRepository.findScoresByOwner(accountId);
-		List<MusicScore> musicScores = scores.stream()
-				.map(s ->
-				modelMapper.map(s, MusicScore.class))
-			.collect(Collectors.toList());
-		
-		return musicScores;
+	public List<Score> getScoresByAccountId(Long accountId) {
+		return scoreRepository.findScoresByOwner(accountId);
 	}
 
 	@Transactional
@@ -63,13 +49,11 @@ public class ScoreService {
 	}
 
 	@Transactional
-	public MusicScore updateScore(MusicScore score) {
+	public Score updateScore(Score score) {
 		Score entity = scoreRepository.findById(score.getScoreId())
 		        .orElseThrow(() -> new EntityNotFoundException("Score not found"));
 
-		modelMapper.map(entity, MusicScore.class);
-		Score saved = scoreRepository.save(entity);
-		return modelMapper.map(saved, MusicScore.class);
+		return scoreRepository.save(entity);
 	}
 
 	public Page<Score> searchScore(String title, List<String> tags, Pageable pageable) {
@@ -79,21 +63,14 @@ public class ScoreService {
 		
 		List<Specification<Score>> specs = new ArrayList<>();
 
-        // Title filter (case-insensitive partial match)
         if (StringUtils.hasText(title)) {
             specs.add(ScoreSpecification.titleContains(title));
         }
 
-        // Multiple tags → any match (OR logic)
         if (tags != null && !tags.isEmpty()) {
             specs.add(ScoreSpecification.hasAnyTag(tags));
         }
 
-        // Add more filters here in the future, e.g.:
-        // if (composerId != null) specs.add(hasComposer(composerId));
-        // if (minGrade != null) specs.add(hasGradeAtLeast(minGrade));
-
-        // Combine all specifications with AND
         Specification<Score> combinedSpec = Specification.allOf(specs);		
 		
 	    return scoreRepository.findAll(combinedSpec, pageable);	    

@@ -4,12 +4,19 @@ import java.time.LocalDateTime;
 
 import org.hibernate.validator.constraints.URL;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Vendor {
 	private Long vendorId;
 	@NotBlank

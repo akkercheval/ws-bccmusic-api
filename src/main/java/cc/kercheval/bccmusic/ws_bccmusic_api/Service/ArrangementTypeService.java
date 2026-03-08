@@ -19,7 +19,7 @@ public class ArrangementTypeService {
 	
 	public List<ArrangementType> getArrangementTypes() {
 		Iterable<ArrangementType> arrangementTypes = arrangementTypeRepository.findAll();
-		log.info("Current Arrangement Types: {}", arrangementTypes.toString());
+		
 		return StreamSupport.stream(arrangementTypes.spliterator(), false)
                 .collect(Collectors.toList());
 	}

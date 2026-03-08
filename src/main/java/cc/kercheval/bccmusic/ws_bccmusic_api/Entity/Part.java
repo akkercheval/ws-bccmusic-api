@@ -25,11 +25,17 @@ public class Part {
 	@Column(name="instrument", length=50, nullable=false, unique=false)
 	String instrument;
 	
-	@Column(name="part_number", nullable=false, unique=false)
-	int partNumber;
+	@Column(name="has_solo", columnDefinition = "bit", nullable=false)
+	private boolean hasSolo;
 	
-	@Column(name="flex_number", nullable=true, unique=false)
-	int flexNumber;
+	@Column(name="regular_part_count", nullable=false, unique=false)
+	private int regularPartCount;
+	
+	@Column(name="flex_min_part", nullable=true, unique=false)
+	int flexMinPart;
+	
+	@Column(name="flex_part_count", nullable=true)
+	int flexPartCount;
 	
 	@Column(name="part_comments", length=200, nullable=true, unique=false)
 	String partComments;

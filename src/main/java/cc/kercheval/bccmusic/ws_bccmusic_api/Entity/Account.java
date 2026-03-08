@@ -15,12 +15,22 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
-@Entity(name="Account")
+@NoArgsConstructor               
+@AllArgsConstructor              
+@Builder                         
+@ToString(exclude = {"hashedPassword", "deletedBy"})
+@Entity(name = "Account")
+@Table(name = "Account")
 @SQLRestriction(value = "deleted_at IS NULL")
 public class Account extends AuditEntity {
 
@@ -33,10 +43,11 @@ public class Account extends AuditEntity {
 	String accountName;
 	
 	@Enumerated(EnumType.STRING)
-	@Column(name="account_type", length=20, nullable=false, unique=false)
-	Role accountType;
+	@Column(name = "account_type", length = 20, nullable = false)
+	@Builder.Default
+	private Role accountType = Role.VIEWER;
 	
-	@Column(name="username", length=20, nullable=true)
+	@Column(name="username", length=20, nullable=true, unique = true)
 	private String username;
 	
 	@Column(name="password_hash", nullable=true, length=256)
@@ -78,10 +89,14 @@ public class Account extends AuditEntity {
 			this.accountType = Role.VIEWER;
 		} else {
 			try {
-				this.accountType = Role.valueOf(role);
+				this.accountType = Role.valueOf(role.toUpperCase());
 			} catch (IllegalArgumentException e) {
 				this.accountType = Role.VIEWER;
 			}
 		}
 	}
+	
+	public boolean isActive() {
+        return deletedAt == null;
+    }
 }
