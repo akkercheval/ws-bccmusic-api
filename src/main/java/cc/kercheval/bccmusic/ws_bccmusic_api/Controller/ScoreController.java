@@ -89,13 +89,13 @@ public class ScoreController {
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	@PreAuthorize("@collaboratorPermissionEvaluator.hasBasicEditScoresPermission(#score.ownerAccountId, authentication)")
+	@PreAuthorize("@collaboratorPermissionEvaluator.hasBasicEditScoresPermission(#score.owner.accountId, authentication)")
 	public MusicScore createScore(@Valid @RequestBody MusicScore score, Principal principal) {
 		log.info("Creating new music score: {}", score.toString());
 		Score newScore = modelMapper.map(score, Score.class);
-		newScore.setCreatedBy(getAccountFromPrincipal(principal));
+		Account editorAccount = getAccountFromPrincipal(principal);
 				
-		return modelMapper.map(scoreService.createScore(newScore), MusicScore.class);
+		return modelMapper.map(scoreService.createScore(newScore, editorAccount), MusicScore.class);
 	}
 	
 	@PutMapping("/{scoreId}")

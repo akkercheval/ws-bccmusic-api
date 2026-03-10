@@ -12,8 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Medley;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Part;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComposer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreSpecification;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreTag;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.ScoreValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.ScoreRepository;
@@ -43,7 +47,34 @@ public class ScoreService {
 	}
 
 	@Transactional
-	public Score createScore(Score score) {
+	public Score createScore(Score score, Account editorAccount) {
+		LocalDateTime currentTime = LocalDateTime.now();
+		score.setCreatedAt(currentTime);
+		score.setCreatedBy(editorAccount);
+		score.setUpdatedAt(currentTime);
+		score.setUpdatedBy(editorAccount);
+		
+		if (score.getMedleys() != null) {
+		    for (Medley medley : score.getMedleys()) {
+		      medley.setScore(score);
+		    }
+		  }
+
+		  if (score.getParts() != null) {
+		    for (Part part : score.getParts()) {
+		      part.setScore(score);
+		    }
+		  }
+		  if (score.getScoreComposers() != null) {
+		    for (ScoreComposer sc : score.getScoreComposers()) {
+		      sc.setScore(score);
+		    }
+		  }
+		  if (score.getScoreTags() != null) {
+		    for (ScoreTag tag : score.getScoreTags()) {
+		      tag.setScore(score);
+		    }
+		  }		
 		
 		return scoreRepository.save(score);
 	}

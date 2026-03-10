@@ -8,6 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,7 @@ public class MusicScore {
 	private Account createdBy;
 	private LocalDateTime updatedAt;
 	private Account updatedBy;
-	@NotBlank
+	@NotNull
 	private ArrangementType arrangementType;
 	private List<ScoreComposer> scoreComposers;
 	private List<Part> parts;
