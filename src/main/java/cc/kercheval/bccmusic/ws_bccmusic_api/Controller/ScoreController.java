@@ -91,6 +91,7 @@ public class ScoreController {
 	@ResponseStatus(HttpStatus.CREATED)
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasBasicEditScoresPermission(#score.ownerAccountId, authentication)")
 	public MusicScore createScore(@Valid @RequestBody MusicScore score, Principal principal) {
+		log.info("Creating new music score: {}", score.toString());
 		Score newScore = modelMapper.map(score, Score.class);
 		newScore.setCreatedBy(getAccountFromPrincipal(principal));
 				

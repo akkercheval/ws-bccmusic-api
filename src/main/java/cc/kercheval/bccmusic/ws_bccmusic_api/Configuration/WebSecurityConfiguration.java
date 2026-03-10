@@ -58,10 +58,10 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/arrangement-types").authenticated()
                 .requestMatchers(HttpMethod.GET, "/composers").authenticated()
                 .requestMatchers(HttpMethod.GET, "/composers/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/composers").authenticated()
+                .requestMatchers(HttpMethod.POST, "/composers").authenticated()	//.hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
                 .requestMatchers(HttpMethod.PUT, "/composers").hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
+                .requestMatchers(HttpMethod.GET, "/score-tags").authenticated()
                 .requestMatchers("/scores/**").authenticated()
-//.hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
                 .anyRequest().authenticated()
             )
 
@@ -71,9 +71,7 @@ public class WebSecurityConfiguration {
                     .usernameParameter("username")
                     .passwordParameter("password")
                     .permitAll()
-                    // Remove defaultSuccessUrl — we'll handle it manually
                     .successHandler((request, response, authentication) -> {
-                        // Return JSON success instead of redirect
                         response.setStatus(HttpServletResponse.SC_OK);
                         response.setContentType("application/json");
                         response.getWriter().write("{\"success\": true, \"message\": \"Login successful\"}");

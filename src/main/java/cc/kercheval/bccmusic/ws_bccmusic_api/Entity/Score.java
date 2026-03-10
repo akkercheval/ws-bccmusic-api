@@ -16,7 +16,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -52,6 +51,20 @@ public class Score extends AuditEntity {
 	
 	@Column(name="grade", nullable=false, unique=false, precision = 3, scale = 1)
 	private BigDecimal grade;
+
+	@Column(name="created_at", nullable=false)
+	private LocalDateTime createdAt;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name="created_by")
+	private Account createdBy;
+	
+	@Column(name="updated_at")
+	private LocalDateTime updatedAt;
+	
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name="updated_by")
+	private Account updatedBy;
 	
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "arrangement_type_code", nullable = false)
@@ -68,12 +81,11 @@ public class Score extends AuditEntity {
 	private List<ScoreComposer> scoreComposers = new ArrayList<>();	
 	
 	@OneToMany(mappedBy = "score", cascade = CascadeType.ALL, orphanRemoval = true)
-	@OrderBy("instrument")
 	private List<Part> parts = new ArrayList<>();
 	
 	@OneToMany(mappedBy="score", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<ScoreTag> scoreTags;
 	
 	@OneToMany(mappedBy = "score", cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Medley> medleyPieces = new ArrayList<>();
+	private List<Medley> medleys = new ArrayList<>();
 }

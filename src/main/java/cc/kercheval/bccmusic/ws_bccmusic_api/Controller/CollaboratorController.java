@@ -45,7 +45,10 @@ public class CollaboratorController {
 	
 	@GetMapping("/my-collaborations")
 	public List<CollaborationAccount> getMyCollaborationAccounts(Principal principal) {
-		return collaboratorService.getMyCollaborationAccounts(getAccountIdFromPrincipal(principal));
+		log.info("Fetching valid collaborations.");
+		List<CollaborationAccount> collaborations = collaboratorService.getMyCollaborationAccounts(getAccountIdFromPrincipal(principal));
+		log.info("Collaborations: {}", collaborations.toString());
+		return collaborations;
 	}
 	
 	@PostMapping

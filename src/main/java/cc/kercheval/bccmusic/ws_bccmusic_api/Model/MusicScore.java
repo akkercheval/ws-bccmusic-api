@@ -2,6 +2,7 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Model;
 
 import java.math.BigDecimal;
 import java.sql.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -20,15 +21,19 @@ public class MusicScore {
 	@NotBlank
 	private String scoreTitle;
 	private String scoreSubtitle;
-	private Long ownerAccountId;
-	private String purchasedName;
+	private Account owner;
+	private Vendor purchasedFrom;
 	private Date purchasedDate;
 	private BigDecimal purchasedCost;
 	private BigDecimal grade;
+	private LocalDateTime createdAt;
+	private Account createdBy;
+	private LocalDateTime updatedAt;
+	private Account updatedBy;
 	@NotBlank
-	private String arrangementTypeCode;
-	private List<ScoreComposer> composers;
+	private ArrangementType arrangementType;
+	private List<ScoreComposer> scoreComposers;
 	private List<Part> parts;
-	private List<ScoreTag> tags;
-	private List<Medley> medleyPieces;	
+	private List<ScoreTag> scoreTags;
+	private List<Medley> medleys;	
 }

@@ -60,13 +60,6 @@ public class ModelMapperConfiguration {
 
             // Register the converter globally (optional but useful)
             mapper.addConverter(converter);
-
-            // Specific mapping for MusicScore → Score
-            mapper.typeMap(MusicScore.class, Score.class)
-                .addMappings(m -> m
-                    .using(converter)
-                    .map(MusicScore::getArrangementTypeCode, Score::setArrangementType)
-                );
             
          // Skip ID if we're mapping TO an entity (destination type is your entity package)
             boolean toEntity = ctx.getDestinationType().getName().startsWith("cc.kercheval.bccmusic.ws_bccmusic_api.Entity"); 

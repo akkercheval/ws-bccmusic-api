@@ -119,7 +119,7 @@ public class CollaboratorService {
 	        asCollaborator.sort(Comparator.comparing(CollaborationAccount::getOwnerAccountName));
 
 	        result.addAll(asCollaborator);
-
+	        
 	        return result;
 	    }
 
