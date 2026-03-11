@@ -71,10 +71,14 @@ public class ScoreController {
     public List<MusicScore> getMyScores(Principal principal) {
 
         Long accountId = getAccountFromPrincipal(principal).getAccountId();
-        return scoreService.getScoresByAccountId(accountId).stream()
+        List<MusicScore> myScores = 
+        scoreService.getScoresByAccountId(accountId).stream()
 				.map(s ->
 				modelMapper.map(s, MusicScore.class))
 			.collect(Collectors.toList());
+        log.info("My Scores: {}", myScores.toString());
+        return myScores;
+			
     }
 	
 	@GetMapping("/other-scores")

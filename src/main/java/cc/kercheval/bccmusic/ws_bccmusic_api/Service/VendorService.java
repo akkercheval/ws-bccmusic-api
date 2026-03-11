@@ -3,6 +3,8 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,11 @@ import lombok.RequiredArgsConstructor;
 public class VendorService {
 	
 	private final VendorRepository vendorRepository;
+	
+	public List<Vendor> getAllVendors() {
+		return StreamSupport.stream(vendorRepository.findAll().spliterator(), false)
+				.collect(Collectors.toList());
+	}
 	
 	public Vendor getVendorById(Long vendorId) throws VendorNotFoundException {
 		Optional<cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Vendor> vendorEntity = vendorRepository.findById(vendorId);

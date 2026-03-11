@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Vendor;
 
 public interface VendorRepository extends CrudRepository<Vendor, Long> {
+
 	public Vendor findByVendorId(Long vendorId);
 	
 	@Query("SELECT v FROM Vendor v WHERE v.vendorName LIKE :vendorSearch")

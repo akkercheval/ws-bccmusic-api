@@ -23,12 +23,24 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RestController
-@RequestMapping(value = "/vendor")
+@RequestMapping(value = "/vendors")
 @RequiredArgsConstructor
 public class VendorController {
 	
 	VendorService vendorService;
 	ModelMapper modelMapper;
+	
+	@GetMapping
+	public List<Vendor> getAllVendors() {
+		
+		List<Vendor> vendors = vendorService.getAllVendors()
+				.stream()
+				.map(e ->
+					modelMapper.map(e, Vendor.class))
+				.collect(Collectors.toList());
+		
+		return vendors;
+	}
 	
 	@GetMapping(value = "/{vendorId}")
 	public Vendor getVendor(@PathVariable Long vendorId) throws VendorNotFoundException {
