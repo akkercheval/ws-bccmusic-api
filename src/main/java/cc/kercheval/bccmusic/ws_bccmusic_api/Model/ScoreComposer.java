@@ -23,10 +23,12 @@ public class ScoreComposer {
 	
 	@Override
 	public String toString() {
+		
+		
 		return "ScoreComposer{" +
 				", scoreComposerId=" + scoreComposerId +
 				", scoreId=" + scoreId +
-				composer.toString() +
+				composer!=null?composer.toString(): "" +
 				", ContributionType=" + contributionType +
 				'}';
 	}

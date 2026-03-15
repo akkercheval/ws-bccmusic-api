@@ -30,7 +30,7 @@ public class CollaboratorPermissionEvaluator {
 
         String username = auth.getName();
         Account currentUser = accountService.findByUsername(username);
-
+        log.info("Checking Permissions for user: {} with accountId: {}", currentUser.getAccountName(), currentUser.getAccountId());
         Collaborator collaborator = collaboratorRepository.findByOwnerAccountIdAndCollaboratorAccountId(accountId, currentUser.getAccountId()).orElse(null);
 
         boolean isOwner = accountId.equals(currentUser.getAccountId());

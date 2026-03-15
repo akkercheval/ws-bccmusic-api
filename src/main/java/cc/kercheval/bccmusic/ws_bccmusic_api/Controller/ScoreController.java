@@ -10,7 +10,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,6 +29,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.MusicScore;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.ScoreService;
+import cc.kercheval.bccmusic.ws_bccmusic_api.security.evaluator.CollaboratorPermissionEvaluator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +43,7 @@ public class ScoreController {
 	private final ScoreService scoreService;
 	private final AccountService accountService;
 	private final ModelMapper modelMapper;
+	private final CollaboratorPermissionEvaluator permissionEvaluator;
 	
 	@GetMapping
 	public List<MusicScore> getAllScores() {
@@ -103,19 +107,27 @@ public class ScoreController {
 	}
 	
 	@PutMapping("/{scoreId}")
-	@PreAuthorize("@collaboratorPermissionEvaluator.hasBasicEditScoresPermission(#accountId, authentication)")
-	public MusicScore updateScore(@PathVariable Long scoreId, @Valid @RequestBody MusicScore score) {
+	public MusicScore updateScore(@PathVariable Long scoreId, @Valid @RequestBody MusicScore score, Authentication authentication, Principal principal) {
+		log.info("Score to be Updated: {}", score.toString());
 		if (!scoreId.equals(score.getScoreId())) {
             throw new IllegalArgumentException("Score ID in path must match body");
-        }	
+		}
+		Score scoreToBeDeleted = scoreService.getScoreById(scoreId);
+		if(!permissionEvaluator.hasBasicEditScoresPermission(scoreToBeDeleted.getOwner().getAccountId(), authentication)) {
+			throw new AccessDeniedException("User does not have permission to delete score.");
+		}
 		Score scoreEntity = modelMapper.map(score, Score.class);
+		Account editorAccount = getAccountFromPrincipal(principal);
 		
-		return modelMapper.map(scoreService.updateScore(scoreEntity), MusicScore.class);
+		return modelMapper.map(scoreService.updateScore(scoreEntity, editorAccount), MusicScore.class);
 	}
 	
 	@DeleteMapping("/{scoreId}")
-	@PreAuthorize("@collaboratorPermissionEvaluator.hasFullEditScoresPermission(#accountId, authentication)")
-	public void deleteScore(@PathVariable Long scoreId, Principal principal) {
+	public void deleteScore(@PathVariable Long scoreId, Authentication authentication, Principal principal) {
+		Score scoreToBeDeleted = scoreService.getScoreById(scoreId);
+		if(!permissionEvaluator.hasFullEditScoresPermission(scoreToBeDeleted.getOwner().getAccountId(), authentication)) {
+			throw new AccessDeniedException("User does not have permission to delete score.");
+		}
 		scoreService.deleteScore(scoreId, principal.getName());
 	}
 	
