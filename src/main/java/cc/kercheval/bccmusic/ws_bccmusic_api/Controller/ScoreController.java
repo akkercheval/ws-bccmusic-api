@@ -1,5 +1,6 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
+import java.io.Console;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -108,7 +109,7 @@ public class ScoreController {
 	
 	@PutMapping("/{scoreId}")
 	public MusicScore updateScore(@PathVariable Long scoreId, @Valid @RequestBody MusicScore score, Authentication authentication, Principal principal) {
-		log.info("Score to be Updated: {}", score.toString());
+		
 		if (!scoreId.equals(score.getScoreId())) {
             throw new IllegalArgumentException("Score ID in path must match body");
 		}
@@ -118,6 +119,7 @@ public class ScoreController {
 		}
 		Score scoreEntity = modelMapper.map(score, Score.class);
 		Account editorAccount = getAccountFromPrincipal(principal);
+		System.out.println("Medleys to Save: " + scoreEntity.getMedleys().toString());
 		
 		return modelMapper.map(scoreService.updateScore(scoreEntity, editorAccount), MusicScore.class);
 	}

@@ -122,18 +122,18 @@ public class ScoreService {
 			        Part::getPartId
 			    );
 		  
-//		  if (score.getScoreComposers() != null) {
-//		        for (ScoreComposer sc : score.getScoreComposers()) {
-//		            sc.setScore(entity);
-//		        }
-//		    }
-//		  replaceChildCollection(
-//				  score.getScoreComposers(),
-//				  entity.getScoreComposers(),
-//				  entity::setScoreComposers,
-//				  modelMapper,
-//				  ScoreComposer::getScoreComposerId
-//				  );
+		  if (score.getScoreComposers() != null) {
+		        for (ScoreComposer sc : score.getScoreComposers()) {
+		            sc.setScore(entity);
+		        }
+		    }
+		  replaceChildCollection(
+				  score.getScoreComposers(),
+				  entity.getScoreComposers(),
+				  entity::setScoreComposers,
+				  modelMapper,
+				  ScoreComposer::getScoreComposerId
+				  );
 		  
 		  if (score.getScoreTags() != null) {
 		    for (ScoreTag tag : score.getScoreTags()) {
@@ -147,11 +147,14 @@ public class ScoreService {
 			        modelMapper,
 			        ScoreTag::getScoreTagId
 			    );
+
 		  entity.setPurchasedCost(score.getPurchasedCost());
 		  entity.setPurchasedDate(score.getPurchasedDate());
 		  entity.setPurchasedFrom(score.getPurchasedFrom());
 		  entity.setScoreSubtitle(score.getScoreSubtitle());
 		  entity.setScoreTitle(score.getScoreTitle());
+		  
+		  System.out.println("Medley Collection to Save: " + entity.getMedleys().toString());
 
 		return scoreRepository.save(entity);
 	}
@@ -206,26 +209,32 @@ public class ScoreService {
 	        current = new ArrayList<>();
 	    }
 
-	    // Remove orphans (parts/medleys/tags that were removed in the UI)
-	    current.removeIf(existing ->
-	        incoming.stream().noneMatch(inc ->
-	            Objects.equals(idExtractor.apply(inc), idExtractor.apply(existing))
-	        )
-	    );
+	    current.removeIf(existing -> {
+	        Object exId = idExtractor.apply(existing);
+	        return exId != null &&
+	               incoming.stream().noneMatch(inc ->
+	                   Objects.equals(exId, idExtractor.apply(inc))
+	               );
+	    });
 
-	    // Update existing or add new
 	    for (T inc : incoming) {
-	        T existing = current.stream()
-	                .filter(e -> Objects.equals(idExtractor.apply(inc), idExtractor.apply(e)))
-	                .findFirst()
-	                .orElse(null);
+	        Object incId = idExtractor.apply(inc);
+	        T existing = null;
+
+	        if (incId != null) {
+	            existing = current.stream()
+	                    .filter(e -> Objects.equals(incId, idExtractor.apply(e)))
+	                    .findFirst()
+	                    .orElse(null);
+	        }
 
 	        if (existing != null) {
-	            mapper.map(inc, existing);   // ← updates the managed entity (no INSERT)
+	            mapper.map(inc, existing);
 	        } else {
 	            current.add(inc);
 	        }
 	    }
+	    
 	    setter.accept(current);
 	}
 }

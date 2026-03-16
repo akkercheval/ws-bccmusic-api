@@ -27,8 +27,8 @@ public class ModelMapperConfiguration {
 
         mapper.getConfiguration()
               .setMatchingStrategy(MatchingStrategies.STRICT)
-              .setSkipNullEnabled(true)           // Don't map null source values
-              .setAmbiguityIgnored(true);         // Ignore ambiguous mappings
+              .setSkipNullEnabled(true)    
+              .setAmbiguityIgnored(true);
 
         // Optional: Skip ID fields automatically (very useful!)
         mapper.getConfiguration().setPropertyCondition(ctx -> {
@@ -44,7 +44,6 @@ public class ModelMapperConfiguration {
                   ctx.getMapping().getLastDestinationProperty().getName().equals("scoreComposerId") &&
                   ctx.getMapping().getLastDestinationProperty().getName().equals("scoreTagId") &&
                   ctx.getMapping().getLastDestinationProperty().getName().equals("vendorId") && 
-                  // add other ID field names as needed
                   false;
 
             Converter<String, ArrangementType> converter = new AbstractConverter<String, ArrangementType>() {
