@@ -160,8 +160,8 @@ public class ScoreService {
 	}
 
 	public Page<Score> searchScore(String title, List<String> tags, Pageable pageable) {
-		if(title.isBlank() && tags.size() == 0) {
-			throw new ScoreValidationException("Must include at least one search parameter.");
+		if((title == null || title.isBlank()) && (tags == null || tags.size() == 0)) {
+			return scoreRepository.findAll(pageable);
 		}
 		
 		List<Specification<Score>> specs = new ArrayList<>();
