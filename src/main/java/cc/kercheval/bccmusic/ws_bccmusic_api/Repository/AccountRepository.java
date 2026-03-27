@@ -16,4 +16,7 @@ public interface AccountRepository extends CrudRepository<Account, Long>{
 	public Account findByUsername(String username);
 	
 	public List<Account> findByAccountType(String accountType);
+	
+	@Query("SELECT a FROM Account a WHERE a.accountId not in(SELECT c.collaborator.accountId from Collaborator c WHERE c.owner.accountId= :accountId) AND a.accountId != :accountId AND a.deletedAt is null")
+	public List<Account> findAvailableCollaborators(Long accountId);
 }

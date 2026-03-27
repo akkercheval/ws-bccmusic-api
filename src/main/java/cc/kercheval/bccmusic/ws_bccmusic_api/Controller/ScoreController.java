@@ -1,6 +1,5 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
-import java.io.Console;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;

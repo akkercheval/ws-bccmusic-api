@@ -14,5 +14,6 @@ public class CollaborationAccount {
 	private Long ownerAccountId;
 	private String ownerAccountName;
 	private Long collaboratorAccountId;
+	private String collaboratorAccountName;
 	private String permissionLevel;
 }

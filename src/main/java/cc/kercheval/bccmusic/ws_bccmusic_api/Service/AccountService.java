@@ -3,6 +3,8 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,6 +33,11 @@ public class AccountService {
 	public Account getAccountById(Long accountId) {
 		return accountRepository.findById(accountId)
 				.orElseThrow(() -> new EntityNotFoundException("Account not found with id: " + accountId));
+	}
+	
+	public List<Account> getAllAccounts() {
+		return  StreamSupport.stream(accountRepository.findAll().spliterator(), false)
+				.collect(Collectors.toList());
 	}
 	
 	public Account createAccount(Account account) throws AccountValidationException {

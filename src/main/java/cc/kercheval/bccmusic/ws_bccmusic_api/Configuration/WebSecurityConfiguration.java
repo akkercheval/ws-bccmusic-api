@@ -47,7 +47,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/logout").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
                 .requestMatchers("/dashboard").authenticated()
-                .requestMatchers(HttpMethod.GET, "/accounts/**").hasRole(Role.ADMINISTRATOR.name())
+                .requestMatchers(HttpMethod.GET, "/accounts").hasRole(Role.ADMINISTRATOR.name())
                 .requestMatchers(HttpMethod.PUT, "/accounts").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/accounts/*/password").authenticated()
                 .requestMatchers(HttpMethod.GET, "/collaborators").hasRole(Role.OWNER.name())

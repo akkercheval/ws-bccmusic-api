@@ -19,6 +19,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationAlreadyExist
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.CollaboratorRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class CollaboratorService {
 	private final ModelMapper modelMapper;
 	private final CollaboratorRepository collaboratorRepository;
 	private final AccountService accountService;
+	private final AccountRepository accountRepository;
 	
 	@Transactional
 	public Collaborator addNewCollaborator(Collaborator newCollaborator) throws AccountValidationException, AccountNotFoundException {
@@ -135,11 +137,17 @@ public class CollaboratorService {
 	private CollaborationAccount toCollaborationAccount(
 		    Account owner, Account collaborator, String permissionLevel) {
 		    
-		    CollaborationAccount ca = new CollaborationAccount(owner.getAccountId(),
+		    CollaborationAccount ca = new CollaborationAccount(
+		    		owner.getAccountId(),
 		    		owner.getAccountName(),
 		    		collaborator.getAccountId(),
+		    		collaborator.getAccountName(),
 		    		permissionLevel
 		    		);
 		    return ca;
 		}
+
+	public List<Account> getAvailableCollaborators(Account account) {
+		return accountRepository.findAvailableCollaborators(account.getAccountId());
+	}
 }

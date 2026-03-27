@@ -1,6 +1,9 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
 import java.security.Principal;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -35,10 +38,20 @@ public class AccountController {
 	private final PasswordEncoder passwordEncoder;
 
 	@GetMapping(value = "/{accountId}")
+	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
 	public Account getAccount(@PathVariable Long accountId) {
 		
 		Account account = modelMapper.map(accountService.getAccountById(accountId), Account.class);
 		return account;		
+	}
+	
+	@GetMapping
+	@PreAuthorize("hasRole('ADMINISTRATOR')")
+	public List<Account> getAllAccounts() {
+		return accountService.getAllAccounts().stream()
+				.map(a -> 
+				modelMapper.map(a, Account.class))
+				.collect(Collectors.toList());
 	}
 	
 	@PostMapping
@@ -57,7 +70,7 @@ public class AccountController {
 		return modelMapper.map(createdAccount, Account.class);
 	}
 	
-	@PutMapping
+	@PutMapping(value="/{accountId}")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
 	public Account updateAccount(@Valid @RequestBody Account updatedAccount) throws AccountValidationException, AccountNotFoundException {
 		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account updatedEntity = accountService.updateAccount(modelMapper.map(updatedAccount, cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account.class));

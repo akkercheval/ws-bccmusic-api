@@ -18,7 +18,7 @@ public interface CollaboratorRepository extends CrudRepository<Collaborator, Lon
 	public boolean existsByOwnerAccountIdOrCollaboratorAccountId(Long ownerAccountId, Long collaboratorAccountId);
 	
 	@Query("SELECT new cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount("
-			+ "c.owner.accountId, c.owner.accountName, c.collaborator.accountId, c.permissionLevel) "
+			+ "c.owner.accountId, c.owner.accountName, c.collaborator.accountId, c.collaborator.accountName, c.permissionLevel) "
 			+ "FROM Collaborator c "
 			+ "WHERE c.collaborator.accountId = :collaboratorAccountId")
 	public List<CollaborationAccount> findAllowedOwners(Long collaboratorAccountId);

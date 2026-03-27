@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.AccountInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Collaborator;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
@@ -49,6 +50,14 @@ public class CollaboratorController {
 		List<CollaborationAccount> collaborations = collaboratorService.getMyCollaborationAccounts(getAccountIdFromPrincipal(principal));
 		log.info("Collaborations: {}", collaborations.toString());
 		return collaborations;
+	}
+	
+	@GetMapping("/available-collaborators")
+	public List<AccountInfo> getAvailableCollaborators(Principal principal) {
+		List<Account> availableAccounts = collaboratorService.getAvailableCollaborators(getAccountIdFromPrincipal(principal));
+		return availableAccounts.stream()
+				.map(account ->	modelMapper.map(account, AccountInfo.class))
+				.toList();
 	}
 	
 	@PostMapping
