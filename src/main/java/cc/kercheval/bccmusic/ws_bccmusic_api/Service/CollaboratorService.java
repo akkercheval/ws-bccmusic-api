@@ -19,6 +19,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationAlreadyExist
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaboratorRequest;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.CollaboratorRepository;
 import jakarta.transaction.Transactional;
@@ -35,10 +36,11 @@ public class CollaboratorService {
 	private final AccountRepository accountRepository;
 	
 	@Transactional
-	public Collaborator addNewCollaborator(Collaborator newCollaborator) throws AccountValidationException, AccountNotFoundException {
-		Long ownerId = newCollaborator.getOwner().getAccountId();
-        Long collaboratorId = newCollaborator.getCollaborator().getAccountId();		
-        
+	public Collaborator addNewCollaborator(CollaboratorRequest request, String currentUsername) throws AccountValidationException, AccountNotFoundException {
+		Long ownerId = request.getOwnerAccountId();
+	    Long collaboratorId = request.getCollaboratorAccountId();
+	    Account granter;
+                
         if(ownerId.equals(collaboratorId)) {
         	throw new IllegalArgumentException("Cannot add self as a collaborator");
         }
@@ -47,16 +49,34 @@ public class CollaboratorService {
 			throw new CollaborationAlreadyExistsException(ownerId, collaboratorId);
 		}
 		
-		newCollaborator.setGrantedAt(LocalDateTime.now());
+		Account owner = accountRepository.findById(ownerId)
+		        .orElseThrow(() -> new AccountNotFoundException("Owner not found"));
+
+	    Account collaborator = accountRepository.findById(collaboratorId)
+	        .orElseThrow(() -> new AccountNotFoundException("Collaborator not found"));
+	    
+	    if(owner.getUsername().equals(currentUsername)) {
+	    	granter=owner;
+	    } else {
+	    	granter=accountRepository.findByUsername(currentUsername);
+	    }
 		
-		log.info("Added collaborator for owner {} by {}", newCollaborator.getOwner().getAccountId(), newCollaborator.getGrantedBy().getAccountId());
+		Collaborator newCollaborator = new Collaborator();
+	    newCollaborator.setOwner(owner);
+	    newCollaborator.setCollaborator(collaborator);
+	    newCollaborator.setPermissionLevel(request.getPermissionLevel());
+	    newCollaborator.setGrantedAt(LocalDateTime.now());
+	    newCollaborator.setGrantedBy(granter);
 		
 		Collaborator savedCollaborator = collaboratorRepository.save(newCollaborator);
+		
+		log.info("Added collaborator for owner {} by {}", newCollaborator.getOwner().getAccountId(), newCollaborator.getGrantedBy().getAccountId());
 		
 		if(Role.VIEWER.name().equalsIgnoreCase(savedCollaborator.getCollaborator().getAccountType().name())) {
 			Account collaboratorAccount = savedCollaborator.getCollaborator();
 			collaboratorAccount.setAccountType(Role.COLLABORATOR.name());
 			accountService.updateAccount(collaboratorAccount);
+			log.info("Updated user {} to Collaborator Role", collaboratorAccount.getUsername());
 		}
 		
 		return savedCollaborator;
@@ -149,5 +169,9 @@ public class CollaboratorService {
 
 	public List<Account> getAvailableCollaborators(Account account) {
 		return accountRepository.findAvailableCollaborators(account.getAccountId());
+	}
+
+	public Collaborator getCollaborator(Long collaboratorId) {
+		return collaboratorRepository.findById(collaboratorId).get();
 	}
 }

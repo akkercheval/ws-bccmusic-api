@@ -78,23 +78,23 @@ public class CollaboratorPermissionEvaluator {
         return hasPermission;
     }
     
-    public boolean hasEditCollaboratorPermission(Long collaboratorId, Authentication auth) {
+    public boolean hasEditCollaboratorPermission(Long ownerAccountId, Authentication auth) {
         if (auth == null || !auth.isAuthenticated()) return false;
 
         String username = auth.getName();
         Account currentUser = accountService.findByUsername(username);
+        
+        if(currentUser.getAccountId().equals(ownerAccountId)) {
+        	return true;
+        }
 
-        Collaborator collab = collaboratorRepository.findById(collaboratorId)
-            .orElseThrow(() -> new EntityNotFoundException("Not found"));
-
-        boolean isOwner = collab.getOwner().getAccountId().equals(currentUser.getAccountId());
         boolean hasCollabEdit = collaboratorRepository.existsByCollaboratorAccountIdAndOwnerAccountIdAndPermissionLevel(
-            currentUser.getAccountId(),
-            collab.getOwner().getAccountId(),
-            CollaborationType.SCORE_COLLAB_EDIT.name()
-        );
+                currentUser.getAccountId(),
+                ownerAccountId,
+                CollaborationType.SCORE_COLLAB_EDIT.name()
+            );
 
-        return isOwner || (hasCollabEdit && !currentUser.getAccountId().equals(collab.getCollaborator().getAccountId()));
+            return hasCollabEdit;
     }
     
     public boolean hasViewScoresPermission(Long accountId, Authentication auth) {
@@ -103,12 +103,14 @@ public class CollaboratorPermissionEvaluator {
         String username = auth.getName();
         Account currentUser = accountService.findByUsername(username);
         
+        if(currentUser.getAccountId().equals(accountId)) {
+        	return true;
+        }
+        
         List<String> validPermissions = List.of(CollaborationType.VIEW_ONLY.name(), CollaborationType.LIMITED_SCORE_EDIT.name(), CollaborationType.SCORE_EDIT.name(), CollaborationType.SCORE_COLLAB_EDIT.name());
         Collaborator collaborator = collaboratorRepository.findByOwnerAccountIdAndCollaboratorAccountId(accountId, currentUser.getAccountId()).orElse(null);
-        
-        boolean isOwner = collaborator.getOwner().getAccountId().equals(currentUser.getAccountId());
-        boolean hasViewPermission = collaborator != null && validPermissions.contains(collaborator.getPermissionLevel());
 
-        return isOwner || hasViewPermission;
+        return collaborator != null && validPermissions.contains(collaborator.getPermissionLevel());
+
     }
 }

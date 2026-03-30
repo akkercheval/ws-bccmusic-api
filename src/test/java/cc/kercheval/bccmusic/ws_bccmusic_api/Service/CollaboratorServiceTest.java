@@ -6,14 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,6 +30,8 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Enum.Role;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationAlreadyExistsException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaboratorRequest;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.CollaboratorRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +45,9 @@ class CollaboratorServiceTest {
 	@Mock
 	private AccountService accountService;
 	
+	@Mock
+	private AccountRepository accountRepository;
+	
 	@InjectMocks
 	private CollaboratorService collaboratorService;
 	
@@ -53,11 +57,13 @@ class CollaboratorServiceTest {
 		Account ownerAccount = createOwnerAccount();
 		Account viewerAccount = createViewerAccount();
 				
-		Collaborator testCollaborator = new Collaborator();
-		testCollaborator.setCollaborator(viewerAccount);
-		testCollaborator.setOwner(ownerAccount);
+		CollaboratorRequest testCollaborator = new CollaboratorRequest();
+		testCollaborator.setCollaboratorAccountId(viewerAccount.getAccountId());
+		testCollaborator.setOwnerAccountId(ownerAccount.getAccountId());
 		testCollaborator.setPermissionLevel(CollaborationType.SCORE_EDIT.name());
-		testCollaborator.setGrantedBy(ownerAccount);
+		
+		when(accountRepository.findById(ownerAccount.getAccountId())).thenReturn(Optional.of(ownerAccount));
+		when(accountRepository.findById(viewerAccount.getAccountId())).thenReturn(Optional.of(viewerAccount));
 		
 		when(collaboratorRepository.existsByOwnerAccountIdAndCollaboratorAccountId(anyLong(), anyLong())).thenReturn(false);
 		
@@ -73,7 +79,7 @@ class CollaboratorServiceTest {
         when(accountService.updateAccount(accountCaptor.capture()))
             .thenAnswer(invocation -> invocation.getArgument(0));
 	    
-	    Collaborator result = collaboratorService.addNewCollaborator(testCollaborator);
+	    Collaborator result = collaboratorService.addNewCollaborator(testCollaborator, "owneraccount");
 	    Collaborator capturedCollaborator = collaboratorCaptor.getValue();
 	    
 	    assertTrue(capturedCollaborator.getGrantedAt().isBefore(LocalDateTime.now().plusSeconds(1)));
@@ -100,16 +106,16 @@ class CollaboratorServiceTest {
 
         Account owner = createOwnerAccount();
         Account collaborator = createCollaboratorAccount();
-        Account grantedBy = createAdminAccount();
 
-        Collaborator testCollaborator = new Collaborator();
-        testCollaborator.setOwner(owner);
-        testCollaborator.setCollaborator(collaborator);
-        testCollaborator.setGrantedBy(grantedBy);
+        CollaboratorRequest testCollaborator = new CollaboratorRequest();
+		testCollaborator.setCollaboratorAccountId(collaborator.getAccountId());
+		testCollaborator.setOwnerAccountId(owner.getAccountId());
         testCollaborator.setPermissionLevel(CollaborationType.SCORE_EDIT.name());
 
         when(collaboratorRepository.existsByOwnerAccountIdAndCollaboratorAccountId(anyLong(), anyLong()))
             .thenReturn(false);
+		when(accountRepository.findById(owner.getAccountId())).thenReturn(Optional.of(owner));
+		when(accountRepository.findById(collaborator.getAccountId())).thenReturn(Optional.of(collaborator));
 
         ArgumentCaptor<Collaborator> captor = ArgumentCaptor.forClass(Collaborator.class);
         when(collaboratorRepository.save(captor.capture()))
@@ -119,7 +125,7 @@ class CollaboratorServiceTest {
                 return c;
             });
 
-        collaboratorService.addNewCollaborator(testCollaborator);
+        collaboratorService.addNewCollaborator(testCollaborator, "owneraccount");
 
         verify(accountService, never()).updateAccount(any(Account.class));
 
@@ -132,13 +138,12 @@ class CollaboratorServiceTest {
 	void addNewCollaborator_whenOwnerIsCollaborator_thenException() {
 		Account account = createOwnerAccount();
 		
-		Collaborator collaborator = new Collaborator();
-		collaborator.setOwner(account);
-		collaborator.setCollaborator(account);
-		collaborator.setGrantedBy(account);
+		CollaboratorRequest collaborator = new CollaboratorRequest();
+		collaborator.setCollaboratorAccountId(account.getAccountId());
+		collaborator.setOwnerAccountId(account.getAccountId());
 		collaborator.setPermissionLevel(CollaborationType.SCORE_COLLAB_EDIT.name());
 		
-		assertThatThrownBy(() -> collaboratorService.addNewCollaborator(collaborator))
+		assertThatThrownBy(() -> collaboratorService.addNewCollaborator(collaborator, "owneraccount"))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("Cannot add self as a collaborator");
 	}
@@ -149,15 +154,14 @@ class CollaboratorServiceTest {
 		Account ownerAccount = createOwnerAccount();
 		Account collaboratorAccount = createViewerAccount();
 		
-		Collaborator collaborator = new Collaborator();
-		collaborator.setOwner(ownerAccount);
-		collaborator.setCollaborator(collaboratorAccount);
-		collaborator.setGrantedBy(ownerAccount);
+		CollaboratorRequest collaborator = new CollaboratorRequest();
+		collaborator.setCollaboratorAccountId(collaboratorAccount.getAccountId());
+		collaborator.setOwnerAccountId(ownerAccount.getAccountId());
 		collaborator.setPermissionLevel(CollaborationType.SCORE_EDIT.name());
 		
 		when(collaboratorRepository.existsByOwnerAccountIdAndCollaboratorAccountId(anyLong(), anyLong())).thenReturn(true);
 		
-		assertThatThrownBy(() -> collaboratorService.addNewCollaborator(collaborator))
+		assertThatThrownBy(() -> collaboratorService.addNewCollaborator(collaborator, "collabaccount"))
 		.isInstanceOf(CollaborationAlreadyExistsException.class);
 	}
 	
@@ -186,15 +190,6 @@ class CollaboratorServiceTest {
 				.accountName("Collaborator Account")
 				.accountType(Role.COLLABORATOR)
 				.username("collabaccount")
-				.build();
-	}
-	
-	private Account createAdminAccount() {
-		return Account.builder()
-				.accountId(111L)
-				.accountName("Admin Account")
-				.accountType(Role.ADMINISTRATOR)
-				.username("adminaccount")
 				.build();
 	}
 }
