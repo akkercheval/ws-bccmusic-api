@@ -2,35 +2,30 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
-# Copy Maven files first for better layer caching
+# Copy pom.xml first for dependency caching
 COPY pom.xml .
-COPY .mvn .mvn
-COPY mvnw mvnw
 
-# Make Maven wrapper executable
-RUN chmod +x mvnw
-
-# Download dependencies (cached if pom.xml unchanged)
-RUN ./mvnw dependency:go-offline -B
+# Download dependencies (this layer is cached if pom.xml doesn't change)
+RUN mvn dependency:go-offline -B --no-transfer-progress
 
 # Copy source code and build the JAR
 COPY src ./src
-RUN ./mvnw clean package -DskipTests --no-transfer-progress
+RUN mvn clean package -DskipTests --no-transfer-progress
 
 # Stage 2: Lightweight runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Create non-root user for better security
+# Create non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring
 
-# Copy only the executable JAR from the builder stage
+# Copy the built JAR
 COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 8080
 
-# Production-ready JVM flags for containers
+# Optimized JVM flags for container
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
     "-XX:MaxRAMPercentage=75.0", \

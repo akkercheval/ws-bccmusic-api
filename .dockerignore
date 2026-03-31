@@ -1,7 +1,6 @@
 target/
 .git
 .gitignore
+.gitattributes
 README.md
-mvnw
-.mvn
-src/test
+Dockerfile
