@@ -2,6 +2,9 @@
 FROM eclipse-temurin:21-jdk-alpine AS builder
 WORKDIR /app
 
+# Install Maven (Alpine version doesn't include it by default)
+RUN apk add --no-cache maven
+
 # Copy pom.xml first for dependency caching
 COPY pom.xml .
 

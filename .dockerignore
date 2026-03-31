@@ -1,6 +1,5 @@
 target/
 .git
 .gitignore
-.gitattributes
 README.md
 Dockerfile
