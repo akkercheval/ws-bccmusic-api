@@ -5,13 +5,16 @@ import java.util.List;
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 public final class ScoreSpecification {
 
     private ScoreSpecification() {}  // prevent instantiation
 
     public static Specification<Score> titleContains(String title) {
-        return (root, _, cb) -> {
+        return (root, query, cb) -> {
             if (title == null || title.trim().isEmpty()) {
                 return null;
             }
@@ -23,7 +26,7 @@ public final class ScoreSpecification {
         if (tags == null || tags.isEmpty()) {
             return null;
         }
-        return (root, _, _) -> {
+        return (root, query, cb) -> {
             Join<Score, ScoreTag> tagJoin = root.join("scoreTags");
             return tagJoin.get("tag").in(tags);
         };
