@@ -1,2 +1,7 @@
 target/
 .git
+.gitignore
+README.md
+mvnw
+.mvn
+src/test
