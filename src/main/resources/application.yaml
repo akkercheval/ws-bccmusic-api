@@ -1,36 +1,34 @@
 spring:
   application:
     name: ws-bccmusic-api
+
   datasource:
-    url: jdbc:sqlserver://192.168.0.10:1433;database=BCCMusic;encrypt=true;trustServerCertificate=true;
+    url: jdbc:sqlserver://192.168.0.10:1433;databaseName=BCCMusic;encrypt=true;trustServerCertificate=true;
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
     hikari:
-      maximum-pool-size=10
-      minimum-idle=5
-      idle-timeout=300000
-      connection-timeout=20000
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
   jpa:
     hibernate:
       ddl-auto: validate
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: false 
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.SQLServerDialect
         format_sql: true
+
   security:
     password:
-      bcrypt-strength=12
-logging:
-  level:
-    org:
-      springframework:
-        security: DEBUG
-        web: DEBUG
-		# cc.kercheval: DEBUG   # Uncomment when debugging your own code
+      bcrypt-strength: 12
+
 management:
   endpoints:
     web:
@@ -45,10 +43,17 @@ management:
     ldap:
       enabled: false
 
-# Graceful shutdown and compression (recommended for production)
 server:
   shutdown: graceful
   compression:
     enabled: true
     mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
-    min-response-size: 1024  
+    min-response-size: 1024
+
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+        web: DEBUG
+    # cc.kercheval: DEBUG   # Uncomment when debugging your own code
