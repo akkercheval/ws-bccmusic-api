@@ -10,7 +10,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Data;
 
-@Entity(name="ScoreTag")
+@Entity
 @Table(name = "ScoreTag")
 @Data
 public class ScoreTag {
