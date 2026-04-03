@@ -34,7 +34,7 @@ jobs:
         with:
           images: ghcr.io/akkercheval/ws-bccmusic-api
           tags: |
-            type=sha,format=short
+            type=sha,format=long
             type=ref,event=branch
             type=raw,value=latest,enable={{is_default_branch}}
 
