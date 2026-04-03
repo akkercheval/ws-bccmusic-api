@@ -43,6 +43,7 @@ public class WebSecurityConfiguration {
             
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/perform_login", "/logout").permitAll()
                 .requestMatchers(HttpMethod.POST, "/accounts").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/static/**").permitAll()
@@ -69,7 +70,6 @@ public class WebSecurityConfiguration {
             )
 
             .formLogin(form -> form
-                    .loginPage("/login")
                     .loginProcessingUrl("/perform_login")
                     .usernameParameter("username")
                     .passwordParameter("password")
