@@ -26,6 +26,10 @@ spring:
         format_sql: true
 
   security:
+    web:
+      firewall: 
+        http-firewall: org.springframework.security.web.firewall.StrictHttpFirewall
+        strict-http:firewall: false
     password:
       bcrypt-strength: 12
 
