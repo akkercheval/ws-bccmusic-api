@@ -5,10 +5,12 @@ import java.util.List;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.web.cors.CorsConfiguration;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Enum.Role;
@@ -41,10 +43,9 @@ public class WebSecurityConfiguration {
             
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                .requestMatchers("/login", "/create", "/css/**", "/js/**").permitAll()
+                .requestMatchers(HttpMethod.POST, "/perform_login", "/logout").permitAll()
                 .requestMatchers(HttpMethod.POST, "/accounts").permitAll()
-                .requestMatchers(HttpMethod.POST, "/perform_login").permitAll()
-                .requestMatchers(HttpMethod.POST, "/logout").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/static/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/me").authenticated()
                 .requestMatchers("/dashboard").authenticated()
                 .requestMatchers(HttpMethod.GET, "/accounts").hasRole(Role.ADMINISTRATOR.name())
@@ -86,6 +87,10 @@ public class WebSecurityConfiguration {
                         response.getWriter().flush();
                     })
                 )
+            
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            )
 
             .logout(logout -> logout
             	    .logoutUrl("/logout")
