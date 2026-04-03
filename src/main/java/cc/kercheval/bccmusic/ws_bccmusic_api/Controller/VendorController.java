@@ -27,8 +27,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class VendorController {
 	
-	VendorService vendorService;
-	ModelMapper modelMapper;
+	private final VendorService vendorService;
+	private final ModelMapper modelMapper;
 	
 	@GetMapping
 	public List<Vendor> getAllVendors() {
