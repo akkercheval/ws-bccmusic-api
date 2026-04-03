@@ -67,3 +67,22 @@ jobs:
           git add apps/ws-bccmusic-api/deployment.yaml
           git commit -m "chore: update backend image to SHA ${SHA}" || echo "No changes to commit"
           git push
+      - name: Update GitOps repo with new backend image
+        if: github.ref == 'refs/heads/main'   # only on main branch
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/akkercheval/bccmusic-gitops.git gitops
+          cd gitops
+
+          # Update the image to the exact sha- tag your build already pushes
+          sed -i "s|image: ghcr.io/akkercheval/ws-bccmusic-api:.*|image: ghcr.io/akkercheval/ws-bccmusic-api:sha-${{ github.sha }}|g" \
+          apps/ws-bccmusic-api/deployment.yaml
+
+          # Optional but nice: force a rollout even if the tag somehow matched
+          sed -i "/imagePullPolicy: Always/a \            # Auto-updated by CI on ${{ github.sha }}" \
+          apps/ws-bccmusic-api/deployment.yaml
+
+          git add apps/ws-bccmusic-api/deployment.yaml
+          git commit -m "chore: update backend image to sha-${{ github.sha }} (build #${{ github.run_number }})" || echo "No changes"
+          git push origin main
