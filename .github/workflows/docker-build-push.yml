@@ -11,9 +11,6 @@ jobs:
       contents: read
       packages: write
 
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,7 +25,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -38,7 +35,7 @@ jobs:
             type=ref,event=branch
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -48,3 +45,23 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Update gitops repo with new SHA
+        if: github.ref == 'refs/heads/main'
+        uses: actions/checkout@v4
+        with:
+          repository: akkercheval/bccmusic-gitops
+          token: ${{ secrets.GITOPS_PAT }}   # You'll need to create this secret
+          path: gitops
+
+      - name: Update deployment.yaml with new SHA
+        if: github.ref == 'refs/heads/main'
+        run: |
+          cd gitops
+          SHA=${{ steps.meta.outputs.version }}   # This is the full SHA
+          sed -i "s|image: ghcr.io/akkercheval/ws-bccmusic-api:.*|image: ghcr.io/akkercheval/ws-bccmusic-api:${SHA}|g" apps/ws-bccmusic-api/deployment.yaml
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add apps/ws-bccmusic-api/deployment.yaml
+          git commit -m "Update backend image to SHA ${SHA}" || echo "No changes to commit"
+          git push
