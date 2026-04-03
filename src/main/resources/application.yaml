@@ -55,6 +55,9 @@ logging:
   level:
     org:
       springframework:
-        security: DEBUG
-        web: DEBUG
-    # cc.kercheval: DEBUG   # Uncomment when debugging your own code
+        boot:
+          actuate: WARN
+        security: WARN
+        web: WARN
+    cc:
+      kercheval: DEBUG   # Uncomment when debugging your own code
