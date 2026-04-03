@@ -35,6 +35,7 @@ mvnw.cmd
 .vscode/
 
 ### protect private data when committing to github ###
+*.local.yaml
 application-local.yaml
 application-dev.yaml
 application-prod.yaml
