@@ -46,43 +46,30 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # === Update gitops repo with new SHA ===
-      - name: Checkout gitops repo
-        if: github.ref == 'refs/heads/main'
-        uses: actions/checkout@v4
-        with:
-          repository: akkercheval/bccmusic-gitops
-          token: ${{ secrets.GITOPS_PAT }}
-          path: gitops
-
-      - name: Update deployment.yaml with new image SHA
-        if: github.ref == 'refs/heads/main'
-        run: |
-          cd gitops
-          SHA=${{ steps.meta.outputs.version }}
-          echo "Updating deployment with SHA: $SHA"
-          sed -i "s|image: ghcr.io/akkercheval/ws-bccmusic-api:.*|image: ghcr.io/akkercheval/ws-bccmusic-api:${SHA}|g" apps/ws-bccmusic-api/deployment.yaml
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git add apps/ws-bccmusic-api/deployment.yaml
-          git commit -m "chore: update backend image to SHA ${SHA}" || echo "No changes to commit"
-          git push
+      # === Update gitops repo with new image (using the sha- tag) ===
       - name: Update GitOps repo with new backend image
-        if: github.ref == 'refs/heads/main'   # only on main branch
+        if: github.ref == 'refs/heads/main'
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Clone the gitops repo (clean every time)
+          rm -rf gitops
           git clone https://x-access-token:${{ secrets.GITOPS_PAT }}@github.com/akkercheval/bccmusic-gitops.git gitops
           cd gitops
 
-          # Update the image to the exact sha- tag your build already pushes
-          sed -i "s|image: ghcr.io/akkercheval/ws-bccmusic-api:.*|image: ghcr.io/akkercheval/ws-bccmusic-api:sha-${{ github.sha }}|g" \
-          apps/ws-bccmusic-api/deployment.yaml
+          # Use the exact sha- tag that the metadata action already created
+          SHA_TAG="sha-${{ github.sha }}"
+          echo "Updating deployment with image tag: ${SHA_TAG}"
 
-          # Optional but nice: force a rollout even if the tag somehow matched
-          sed -i "/imagePullPolicy: Always/a \            # Auto-updated by CI on ${{ github.sha }}" \
-          apps/ws-bccmusic-api/deployment.yaml
+          # Replace any existing image line for this service
+          sed -i "s|image: ghcr.io/akkercheval/ws-bccmusic-api:.*|image: ghcr.io/akkercheval/ws-bccmusic-api:${SHA_TAG}|g" \
+            apps/ws-bccmusic-api/deployment.yaml
+
+          # Optional: Add a comment to make it obvious this was auto-updated (helps with debugging)
+          sed -i '/imagePullPolicy: Always/a \            # Auto-updated by CI on ${{ github.sha }} (build #${{ github.run_number }})' \
+            apps/ws-bccmusic-api/deployment.yaml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add apps/ws-bccmusic-api/deployment.yaml
-          git commit -m "chore: update backend image to sha-${{ github.sha }} (build #${{ github.run_number }})" || echo "No changes"
+          git commit -m "chore: update backend image to ${SHA_TAG} (build #${{ github.run_number }})" || echo "No changes to commit"
           git push origin main
