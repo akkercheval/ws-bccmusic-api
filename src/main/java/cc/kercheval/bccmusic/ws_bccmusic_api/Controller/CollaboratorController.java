@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.AccountInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Collaborator;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaboratorRequest;
@@ -40,15 +41,29 @@ public class CollaboratorController {
 	private final CollaboratorPermissionEvaluator collaboratorPermissionEvaluator;
 	
 	@GetMapping
-	public List<Collaborator> getMyCollaborators(Principal principal) {
-		Long myAccountId = getAccountIdFromPrincipal(principal).getAccountId();
-		return collaboratorService.getMyCollaborators(myAccountId).stream()
+	public List<Collaborator> getMyCollaborators(Principal principal) throws AccountNotFoundException {
+		if(principal == null || principal.getName() == null) {
+			log.warn("Cannot getMyCollaborators.  Principal is null.");
+			throw new CollaborationValidationException("Cannot get My Collaborators. User is not logged in or username is null.");
+		}
+			 
+		log.info("Principal: {}", principal.getName());
+		Account myAccount = getAccountIdFromPrincipal(principal);
+		if(myAccount == null) {
+			log.warn("Cannot getMyCollaborators.  User Account does not exist or was not found.");
+			throw new AccountNotFoundException("Cannot get Collaborators: Account Not found.");
+		}
+		log.info("My AccountId: {}", myAccount.getAccountId());
+		return collaboratorService.getMyCollaborators(myAccount.getAccountId()).stream()
 				.map(collaborator -> modelMapper.map(collaborator, Collaborator.class))
 				.toList();
 	}
 	
 	@GetMapping("/{collaboratorId}")
 	public Collaborator getCollaborator(Long collaboratorId) {
+		log.info("Collaborator Id to find: {}", collaboratorId);
+		if(collaboratorId == null)
+			return null;
 		return modelMapper.map(collaboratorService.getCollaborator(collaboratorId), Collaborator.class);
 	}
 	
