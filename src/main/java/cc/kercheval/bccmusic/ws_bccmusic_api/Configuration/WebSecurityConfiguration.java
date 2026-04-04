@@ -53,6 +53,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.PUT, "/accounts").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/accounts/*/password").authenticated()
                 .requestMatchers(HttpMethod.GET, "/collaborators").hasRole(Role.OWNER.name())
+                .requestMatchers(HttpMethod.GET, "/collaborators/myAllowedOwners").authenticated()
                 .requestMatchers(HttpMethod.GET, "/collaborators/my-collaborations").authenticated()
                 .requestMatchers(HttpMethod.POST, "/collaborators/*").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/collaborators/*").authenticated()

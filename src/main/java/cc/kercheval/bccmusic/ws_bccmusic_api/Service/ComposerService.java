@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Composer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.ComposerValidationException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.ComposerRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

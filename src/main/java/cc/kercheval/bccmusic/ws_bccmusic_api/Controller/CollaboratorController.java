@@ -20,6 +20,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.AccountInfo;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Collaborator;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaboratorRequest;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
@@ -48,7 +49,7 @@ public class CollaboratorController {
 		}
 			 
 		log.info("Principal: {}", principal.getName());
-		Account myAccount = getAccountIdFromPrincipal(principal);
+		Account myAccount = getAccountFromPrincipal(principal);
 		if(myAccount == null) {
 			log.warn("Cannot getMyCollaborators.  User Account does not exist or was not found.");
 			throw new AccountNotFoundException("Cannot get Collaborators: Account Not found.");
@@ -57,6 +58,12 @@ public class CollaboratorController {
 		return collaboratorService.getMyCollaborators(myAccount.getAccountId()).stream()
 				.map(collaborator -> modelMapper.map(collaborator, Collaborator.class))
 				.toList();
+	}
+	
+	@GetMapping("/myAllowedOwners")
+	public List<CollaborationInfo> getMyAllowedOwners(Principal principal) throws AccountNotFoundException {
+		
+		return collaboratorService.getMyAllowedOwnerAccounts(getAccountFromPrincipal(principal));
 	}
 	
 	@GetMapping("/{collaboratorId}")
@@ -70,7 +77,7 @@ public class CollaboratorController {
 	
 	@GetMapping("/available-collaborators")
 	public List<AccountInfo> getAvailableCollaborators(Principal principal) {
-		List<Account> availableAccounts = collaboratorService.getAvailableCollaborators(getAccountIdFromPrincipal(principal));
+		List<Account> availableAccounts = collaboratorService.getAvailableCollaborators(getAccountFromPrincipal(principal));
 		return availableAccounts.stream()
 				.map(account ->	modelMapper.map(account, AccountInfo.class))
 				.toList();
@@ -103,7 +110,7 @@ public class CollaboratorController {
 	    return collaboratorPermissionEvaluator.hasEditCollaboratorPermission(collaboratorId, authentication);
 	}
 	
-	private Account getAccountIdFromPrincipal(Principal principal) {
+	private Account getAccountFromPrincipal(Principal principal) {
 		return accountService.findByUsername(principal.getName());
 	}
 }

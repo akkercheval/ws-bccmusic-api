@@ -8,6 +8,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Collaborator;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo;
 
 public interface CollaboratorRepository extends CrudRepository<Collaborator, Long> {
 	
@@ -22,6 +23,15 @@ public interface CollaboratorRepository extends CrudRepository<Collaborator, Lon
 			+ "FROM Collaborator c "
 			+ "WHERE c.collaborator.accountId = :collaboratorAccountId")
 	public List<CollaborationAccount> findAllowedOwners(Long collaboratorAccountId);
+	
+	@Query("SELECT new cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo("
+	        + "c.owner.accountId, c.owner.accountName, c.permissionLevel) "
+	        + "FROM Collaborator c "
+	        + "WHERE c.collaborator.accountId = :accountId")
+	List<CollaborationInfo> findMyAllowedOwnerCollaborationInfos(Long accountId);
+	
+	@Query("SELECT c FROM Collaborator c WHERE c.collaborator.accountId = :accountId")
+	public List<Collaborator> findMyAllowedOwners(Long accountId);
 	
 	public boolean existsByOwnerAccountIdAndCollaboratorAccountId(Long ownerAccountId, Long collaboratorAccountId);
 		

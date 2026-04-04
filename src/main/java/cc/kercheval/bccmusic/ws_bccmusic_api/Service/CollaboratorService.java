@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Collaborator;
@@ -18,11 +19,11 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationExceptio
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationAlreadyExistsException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
-import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaboratorRequest;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.CollaboratorRepository;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -121,52 +122,45 @@ public class CollaboratorService {
 		return collaboratorRepository.findByOwnerAccountId(myAccountId);
 	}
 	
-	public List<CollaborationAccount> getMyCollaborationAccounts(Account myAccount) {
-
+	@Transactional(readOnly = true)
+	public List<CollaborationInfo> getMyAllowedOwnerAccounts(Account myAccount) {
+		log.info("Getting My Allowed Owner Accounts for: {}", myAccount.getAccountName());
 	    String myType = myAccount.getAccountType().name();
+    	List<CollaborationInfo> collaborationInfos = new ArrayList<CollaborationInfo>();
 
 	    if (myType.equals(Role.ADMINISTRATOR.name())) {
-	        return accountService.findAllOwners().stream()
-	            .map(owner -> toCollaborationAccount(owner, myAccount, CollaborationType.SCORE_COLLAB_EDIT.name()))
-	            .sorted(Comparator.comparing(CollaborationAccount::getOwnerAccountName))
-	            .toList();
+	    	List<Account> allOwners = accountService.findAllOwners();
+
+	    	for(Account account: allOwners) {
+	    		collaborationInfos.add(new CollaborationInfo(
+	                    account.getAccountId(),
+	                    account.getAccountName(),
+	                    CollaborationType.SCORE_COLLAB_EDIT.name()
+	                ));
+	    	}
+	    	collaborationInfos.sort(Comparator.comparing(
+	    	        CollaborationInfo::getOwnerAccountName,
+	    	        String.CASE_INSENSITIVE_ORDER
+	    	    ));
+	    	log.info("CollaborationInfos: {}", collaborationInfos.toString());
+	    	return collaborationInfos;
 	    }
 
 	    if (myType.equals(Role.OWNER.name())) {
-	        List<CollaborationAccount> result = new ArrayList<>();
-
-	        result.add(toCollaborationAccount(myAccount, myAccount, CollaborationType.SCORE_COLLAB_EDIT.name()));
-
-	        List<CollaborationAccount> asCollaborator = collaboratorRepository.findAllowedOwners(myAccount.getAccountId());
-	        asCollaborator.sort(Comparator.comparing(CollaborationAccount::getOwnerAccountName));
-
-	        result.addAll(asCollaborator);
-	        
-	        return result;
+	    	collaborationInfos.add(new CollaborationInfo(myAccount.getAccountId(), myAccount.getAccountName(), CollaborationType.SCORE_COLLAB_EDIT.name()));
 	    }
+	    
+	    List<CollaborationInfo> myCollabInfos = collaboratorRepository.findMyAllowedOwnerCollaborationInfos(myAccount.getAccountId());
 
-	    if (myType.equals(Role.COLLABORATOR.name())) {
-	        return collaboratorRepository.findAllowedOwners(myAccount.getAccountId()).stream()
-	            .sorted(Comparator.comparing(CollaborationAccount::getOwnerAccountName))
-	            .toList();
-	    }
+	    myCollabInfos.sort(Comparator.comparing(
+	        CollaborationInfo::getOwnerAccountName,
+	        String.CASE_INSENSITIVE_ORDER
+	    ));
 
-	    return List.of();
+	    collaborationInfos.addAll(myCollabInfos);
+	    log.info("CollaborationInfos: {}", collaborationInfos.toString());
+	    return collaborationInfos;
 	}
-	
-	private CollaborationAccount toCollaborationAccount(
-		    Account owner, Account collaborator, String permissionLevel) {
-		    
-		    CollaborationAccount ca = new CollaborationAccount(
-		    		owner.getAccountId(),
-		    		owner.getAccountName(),
-		    		collaborator.getAccountId(),
-		    		collaborator.getAccountName(),
-		    		permissionLevel
-		    		);
-		    return ca;
-		}
-
 	public List<Account> getAvailableCollaborators(Account account) {
 		return accountRepository.findAvailableCollaborators(account.getAccountId());
 	}

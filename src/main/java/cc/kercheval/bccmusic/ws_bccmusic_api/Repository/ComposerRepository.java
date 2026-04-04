@@ -1,4 +1,4 @@
-package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
+package cc.kercheval.bccmusic.ws_bccmusic_api.Repository;
 
 import org.springframework.data.repository.CrudRepository;
 
