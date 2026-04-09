@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Medley {
-	String medleyId;
+	Long medleyId;
 	@NotNull
 	Long scoreId;
 	@NotBlank
