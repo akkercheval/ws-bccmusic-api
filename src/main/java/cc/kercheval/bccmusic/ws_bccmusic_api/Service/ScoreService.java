@@ -22,7 +22,6 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComposer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreSpecification;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreTag;
-import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.ScoreValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.ScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -152,30 +151,36 @@ public class ScoreService {
 		  entity.setPurchasedDate(score.getPurchasedDate());
 		  entity.setPurchasedFrom(score.getPurchasedFrom());
 		  entity.setScoreSubtitle(score.getScoreSubtitle());
-		  entity.setScoreTitle(score.getScoreTitle());
+		  entity.setScoreTitle(score.getScoreTitle());	  
 		  
 		  System.out.println("Medley Collection to Save: " + entity.getMedleys().toString());
 
 		return scoreRepository.save(entity);
 	}
 
-	public Page<Score> searchScore(String title, List<String> tags, Pageable pageable) {
-		if((title == null || title.isBlank()) && (tags == null || tags.size() == 0)) {
-			return scoreRepository.findAll(pageable);
-		}
-		
-		List<Specification<Score>> specs = new ArrayList<>();
+	public Page<Score> searchScore(String title, List<String> tags, Long accountId, Pageable pageable) {
+	    if ((title == null || title.isBlank()) 
+	            && (tags == null || tags.size() == 0) 
+	            && accountId == null) {
+	        return scoreRepository.findAll(pageable);
+	    }
+	    
+	    List<Specification<Score>> specs = new ArrayList<>();
 
-        if (StringUtils.hasText(title)) {
-            specs.add(ScoreSpecification.titleContains(title));
-        }
+	    if (StringUtils.hasText(title)) {
+	        specs.add(ScoreSpecification.titleContains(title));
+	    }
 
-        if (tags != null && !tags.isEmpty()) {
-            specs.add(ScoreSpecification.hasAnyTag(tags));
-        }
+	    if (tags != null && !tags.isEmpty()) {
+	        specs.add(ScoreSpecification.hasAnyTag(tags));
+	    }
 
-        Specification<Score> combinedSpec = Specification.allOf(specs);		
-		
+	    if (accountId != null) {
+	        specs.add(ScoreSpecification.hasOwner(accountId));
+	    }
+
+	    Specification<Score> combinedSpec = Specification.allOf(specs);		
+	    
 	    return scoreRepository.findAll(combinedSpec, pageable);	    
 	}
 

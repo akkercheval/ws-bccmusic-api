@@ -22,9 +22,7 @@ public class ScoreComposer {
 	private String contributionType;
 	
 	@Override
-	public String toString() {
-		
-		
+	public String toString() {	
 		return "ScoreComposer{" +
 				", scoreComposerId=" + scoreComposerId +
 				", scoreId=" + scoreId +

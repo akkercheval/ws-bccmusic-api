@@ -6,11 +6,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
 
-public interface ScoreRepository extends JpaRepository<Score, Long> {
+public interface ScoreRepository extends JpaRepository<Score, Long>, JpaSpecificationExecutor<Score> {
 	
 	@Query("SELECT s FROM Score s WHERE s.owner.accountId = :accountId")	
 	public List<Score> findScoresByOwner(Long accountId);

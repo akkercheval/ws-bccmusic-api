@@ -66,24 +66,11 @@ public class ScoreController {
 	public Page<MusicScore> searchScores(
 	        @RequestParam(required = false) String title,
 	        @RequestParam(required = false) List<String> tags,
+	        @RequestParam(required = false) Long accountId,
 	        @PageableDefault(size = 25, sort = "scoreTitle") Pageable pageable) {
-		Page<Score> pageableScore = scoreService.searchScore(title, tags, pageable);
+		Page<Score> pageableScore = scoreService.searchScore(title, tags, accountId, pageable);
 		return pageableScore.map(s -> modelMapper.map(s, MusicScore.class));
 	}
-	
-	@GetMapping("/my-scores")
-    public List<MusicScore> getMyScores(Principal principal) {
-
-        Long accountId = getAccountFromPrincipal(principal).getAccountId();
-        List<MusicScore> myScores = 
-        scoreService.getScoresByAccountId(accountId).stream()
-				.map(s ->
-				modelMapper.map(s, MusicScore.class))
-			.collect(Collectors.toList());
-        log.info("My Scores: {}", myScores.toString());
-        return myScores;
-			
-    }
 	
 	@GetMapping("/other-scores")
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasViewScoresPermission(#accountId, authentication)")

@@ -1,17 +1,15 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.Entity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
 
 import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Root;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.CriteriaBuilder;
 
 public final class ScoreSpecification {
 
-    private ScoreSpecification() {}  // prevent instantiation
+    private ScoreSpecification() {}
 
     public static Specification<Score> titleContains(String title) {
         return (root, query, cb) -> {
@@ -31,9 +29,11 @@ public final class ScoreSpecification {
             return tagJoin.get("tag").in(tags);
         };
     }
+    
+    public static Specification<Score> hasOwner(Long accountId) {
+        return (root, query, cb) -> cb.equal(root.get("owner").get("accountId"), accountId);
+    }
 
-    // Potential future extensions:
-    /*
     public static Specification<Score> hasComposer(Long composerId) {
         return (root, query, cb) -> 
             composerId == null ? null :
@@ -45,5 +45,5 @@ public final class ScoreSpecification {
             minGrade == null ? null :
             cb.greaterThanOrEqualTo(root.get("grade"), minGrade);
     }
-    */
+
 }
