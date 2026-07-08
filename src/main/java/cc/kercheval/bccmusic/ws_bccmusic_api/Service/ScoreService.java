@@ -33,14 +33,16 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class ScoreService {
-	
+
 	private final ScoreRepository scoreRepository;
 	private final AccountRepository accountRepository;
 	private final ScoreMapper scoreMapper;
 
+	// --- Public API ---
+
 	public Score getScoreById(Long scoreId) {
 		return scoreRepository.findById(scoreId)
-                .orElseThrow(() -> new EntityNotFoundException("Score not found with id: " + scoreId));
+				.orElseThrow(() -> new EntityNotFoundException("Score not found with id: " + scoreId));
 	}
 
 	public List<Score> getAllScores() {
@@ -58,185 +60,178 @@ public class ScoreService {
 		score.setCreatedBy(editorAccount);
 		score.setUpdatedAt(currentTime);
 		score.setUpdatedBy(editorAccount);
-		
-		if (score.getMedleys() != null) {
-		    for (Medley medley : score.getMedleys()) {
-		        medley.setScore(score);
-		    }
-		}
 
-		if (score.getParts() != null) {
-		    for (Part part : score.getParts()) {
-		        part.setScore(score);
-		    }
-		}
-		  
-		if (score.getScoreComposers() != null) {
-		    for (ScoreComposer sc : score.getScoreComposers()) {
-		        sc.setScore(score);
-		    }
-		}
-		  
-		if (score.getScoreTags() != null) {
-		    for (ScoreTag tag : score.getScoreTags()) {
-		        tag.setScore(score);
-		    }
-		}
-		
+		linkChildrenToParent(score);
+
 		return scoreRepository.save(score);
 	}
 
 	@Transactional
-	public Score updateScore(Score score, Account editorAccount) {
-		Score entity = scoreRepository.findById(score.getScoreId())
-		        .orElseThrow(() -> new EntityNotFoundException("Score not found"));
-		LocalDateTime currentTime = LocalDateTime.now();
-		entity.setUpdatedAt(currentTime);
-		entity.setUpdatedBy(editorAccount);
-		entity.setArrangementType(score.getArrangementType());
-		entity.setGrade(score.getGrade());
-		
-		if (score.getMedleys() != null) {
-		    for (Medley medley : score.getMedleys()) {
-		        medley.setScore(entity);
-		    }
-		}
-		replaceChildCollection(
-		        score.getMedleys(),
-		        entity.getMedleys(),
-		        entity::setMedleys,
-		        scoreMapper::updateMedley,
-		        Medley::getMedleyId
-		);
-		
-		if (score.getParts() != null) {
-		    for (Part part : score.getParts()) {
-		        part.setScore(entity);
-		    }
-		}
-		replaceChildCollection(
-		        score.getParts(),
-		        entity.getParts(),
-		        entity::setParts,
-		        scoreMapper::updatePart,
-		        Part::getPartId
-		);
-		  
-		if (score.getScoreComposers() != null) {
-		    for (ScoreComposer sc : score.getScoreComposers()) {
-		        sc.setScore(entity);
-		    }
-		}
-		replaceChildCollection(
-		        score.getScoreComposers(),
-		        entity.getScoreComposers(),
-		        entity::setScoreComposers,
-		        scoreMapper::updateScoreComposer,
-		        ScoreComposer::getScoreComposerId
-		);
-		  
-		if (score.getScoreTags() != null) {
-		    for (ScoreTag tag : score.getScoreTags()) {
-		        tag.setScore(entity);
-		    }
-		}
-		replaceChildCollection(
-		        score.getScoreTags(),
-		        entity.getScoreTags(),
-		        entity::setScoreTags,
-		        scoreMapper::updateScoreTag,
-		        ScoreTag::getScoreTagId
-		);
+	public Score updateScore(Score incoming, Account editorAccount) {
+		Score entity = scoreRepository.findById(incoming.getScoreId())
+				.orElseThrow(() -> new EntityNotFoundException("Score not found"));
 
-		entity.setPurchasedCost(score.getPurchasedCost());
-		entity.setPurchasedDate(score.getPurchasedDate());
-		entity.setPurchasedFrom(score.getPurchasedFrom());
-		entity.setScoreSubtitle(score.getScoreSubtitle());
-		entity.setScoreTitle(score.getScoreTitle());
+		updateScalarFields(entity, incoming, editorAccount);
+		syncChildren(incoming, entity);
 
 		return scoreRepository.save(entity);
 	}
 
 	public Page<Score> searchScore(String title, List<String> tags, Long accountId, Pageable pageable) {
-	    if ((title == null || title.isBlank()) 
-	            && (tags == null || tags.isEmpty()) 
-	            && accountId == null) {
-	        return scoreRepository.findAll(pageable);
-	    }
-	    
-	    List<Specification<Score>> specs = new ArrayList<>();
+		if ((title == null || title.isBlank())
+				&& (tags == null || tags.isEmpty())
+				&& accountId == null) {
+			return scoreRepository.findAll(pageable);
+		}
 
-	    if (StringUtils.hasText(title)) {
-	        specs.add(ScoreSpecification.titleContains(title));
-	    }
+		List<Specification<Score>> specs = new ArrayList<>();
 
-	    if (tags != null && !tags.isEmpty()) {
-	        specs.add(ScoreSpecification.hasAnyTag(tags));
-	    }
+		if (StringUtils.hasText(title)) {
+			specs.add(ScoreSpecification.titleContains(title));
+		}
+		if (tags != null && !tags.isEmpty()) {
+			specs.add(ScoreSpecification.hasAnyTag(tags));
+		}
+		if (accountId != null) {
+			specs.add(ScoreSpecification.hasOwner(accountId));
+		}
 
-	    if (accountId != null) {
-	        specs.add(ScoreSpecification.hasOwner(accountId));
-	    }
-
-	    Specification<Score> combinedSpec = Specification.allOf(specs);
-	    return scoreRepository.findAll(combinedSpec, pageable);
+		return scoreRepository.findAll(Specification.allOf(specs), pageable);
 	}
 
 	public void deleteScore(Long scoreId, String userName) {
 		Score entity = scoreRepository.findById(scoreId)
-		        .orElseThrow(() -> new EntityNotFoundException("Score not found"));
-		
+				.orElseThrow(() -> new EntityNotFoundException("Score not found"));
+
 		Account account = accountRepository.findByUsername(userName);
-		if (account == null) throw new EntityNotFoundException("User not found.  Cannot delete score: " + scoreId);
-		
+		if (account == null) {
+			throw new EntityNotFoundException("User not found. Cannot delete score: " + scoreId);
+		}
+
 		entity.setDeletedAt(LocalDateTime.now());
 		entity.setDeletedBy(account);
-		
 		scoreRepository.delete(entity);
 	}
-	
+
+	// --- Score update helpers ---
+
+	private void updateScalarFields(Score entity, Score incoming, Account editorAccount) {
+		LocalDateTime currentTime = LocalDateTime.now();
+		entity.setUpdatedAt(currentTime);
+		entity.setUpdatedBy(editorAccount);
+		entity.setScoreTitle(incoming.getScoreTitle());
+		entity.setScoreSubtitle(incoming.getScoreSubtitle());
+		entity.setArrangementType(incoming.getArrangementType());
+		entity.setGrade(incoming.getGrade());
+		entity.setPurchasedCost(incoming.getPurchasedCost());
+		entity.setPurchasedDate(incoming.getPurchasedDate());
+		entity.setPurchasedFrom(incoming.getPurchasedFrom());
+	}
+
+	// --- Child collection management ---
+
+	/**
+	 * Sets the parent back-reference on all child collections for a new Score.
+	 */
+	private void linkChildrenToParent(Score score) {
+		setParentOnChildren(score.getMedleys(), m -> m.setScore(score));
+		setParentOnChildren(score.getParts(), p -> p.setScore(score));
+		setParentOnChildren(score.getScoreComposers(), sc -> sc.setScore(score));
+		setParentOnChildren(score.getScoreTags(), t -> t.setScore(score));
+	}
+
+	/**
+	 * Synchronizes all child collections from the incoming Score onto the persisted entity.
+	 * Each collection is: re-parented to the entity, then merged (add/update/remove).
+	 */
+	private void syncChildren(Score incoming, Score entity) {
+		syncCollection(
+				incoming.getMedleys(), entity.getMedleys(), entity::setMedleys,
+				m -> m.setScore(entity), scoreMapper::updateMedley, Medley::getMedleyId
+		);
+		syncCollection(
+				incoming.getParts(), entity.getParts(), entity::setParts,
+				p -> p.setScore(entity), scoreMapper::updatePart, Part::getPartId
+		);
+		syncCollection(
+				incoming.getScoreComposers(), entity.getScoreComposers(), entity::setScoreComposers,
+				sc -> sc.setScore(entity), scoreMapper::updateScoreComposer, ScoreComposer::getScoreComposerId
+		);
+		syncCollection(
+				incoming.getScoreTags(), entity.getScoreTags(), entity::setScoreTags,
+				t -> t.setScore(entity), scoreMapper::updateScoreTag, ScoreTag::getScoreTagId
+		);
+	}
+
+	/**
+	 * Handles the full lifecycle of a single child collection:
+	 * 1. Sets parent back-reference on incoming items
+	 * 2. Merges incoming into current (adds new, updates existing, removes missing)
+	 */
+	private <T> void syncCollection(
+			List<T> incoming,
+			List<T> current,
+			Consumer<List<T>> setter,
+			Consumer<T> parentLinker,
+			BiConsumer<T, T> updater,
+			Function<T, Object> idExtractor) {
+
+		setParentOnChildren(incoming, parentLinker);
+		replaceChildCollection(incoming, current, setter, updater, idExtractor);
+	}
+
+	private <T> void setParentOnChildren(List<T> children, Consumer<T> parentLinker) {
+		if (children != null) {
+			children.forEach(parentLinker);
+		}
+	}
+
+	/**
+	 * Generic collection merge: removes items no longer present, updates existing by ID,
+	 * and adds new items (those without an ID or with an ID not in current).
+	 */
 	private <T> void replaceChildCollection(
-	        List<T> incoming,
-	        List<T> current,
-	        Consumer<List<T>> setter,
-	        BiConsumer<T, T> updater,
-	        Function<T, Object> idExtractor) {
+			List<T> incoming,
+			List<T> current,
+			Consumer<List<T>> setter,
+			BiConsumer<T, T> updater,
+			Function<T, Object> idExtractor) {
 
-	    if (incoming == null) {
-	        setter.accept(new ArrayList<>());
-	        return;
-	    }
+		if (incoming == null) {
+			setter.accept(new ArrayList<>());
+			return;
+		}
 
-	    if (current == null) {
-	        current = new ArrayList<>();
-	    }
+		if (current == null) {
+			current = new ArrayList<>();
+		}
 
-	    current.removeIf(existing -> {
-	        Object exId = idExtractor.apply(existing);
-	        return exId != null &&
-	               incoming.stream().noneMatch(inc ->
-	                   Objects.equals(exId, idExtractor.apply(inc))
-	               );
-	    });
+		// Remove items that are no longer in the incoming list
+		current.removeIf(existing -> {
+			Object exId = idExtractor.apply(existing);
+			return exId != null &&
+					incoming.stream().noneMatch(inc -> Objects.equals(exId, idExtractor.apply(inc)));
+		});
 
-	    for (T inc : incoming) {
-	        Object incId = idExtractor.apply(inc);
-	        T existing = null;
+		// Update existing or add new
+		for (T inc : incoming) {
+			Object incId = idExtractor.apply(inc);
+			T existing = null;
 
-	        if (incId != null) {
-	            existing = current.stream()
-	                    .filter(e -> Objects.equals(incId, idExtractor.apply(e)))
-	                    .findFirst()
-	                    .orElse(null);
-	        }
+			if (incId != null) {
+				existing = current.stream()
+						.filter(e -> Objects.equals(incId, idExtractor.apply(e)))
+						.findFirst()
+						.orElse(null);
+			}
 
-	        if (existing != null) {
-	            updater.accept(existing, inc);
-	        } else {
-	            current.add(inc);
-	        }
-	    }
-	    
-	    setter.accept(current);
+			if (existing != null) {
+				updater.accept(existing, inc);
+			} else {
+				current.add(inc);
+			}
+		}
+
+		setter.accept(current);
 	}
 }
