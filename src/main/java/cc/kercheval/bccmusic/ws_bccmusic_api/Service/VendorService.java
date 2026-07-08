@@ -59,11 +59,6 @@ public class VendorService {
 	}
 
 	public Vendor updateVendor(Vendor updatedVendor) throws VendorValidationException, VendorNotFoundException {
-		List<String> validationErrors = validateVendor(updatedVendor);
-		if(!validationErrors.isEmpty()) {
-			throw new VendorValidationException(validationErrors.toString());
-		}
-		
 		Optional<cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Vendor> existingVendor = vendorRepository.findById(updatedVendor.getVendorId());
 		if(existingVendor.isEmpty()) {
 			throw new VendorNotFoundException("Vendor " +  updatedVendor.getVendorName() + " cound not be updated because the vendor could not be found.");
@@ -76,11 +71,18 @@ public class VendorService {
 			}
 			vendorToUpdate.setVendorName(updatedVendor.getVendorName());
 		}
+		
+		// Validate the updated fields (skip the duplicate-name check since we handled it above)
+		List<String> validationErrors = validateVendorFields(updatedVendor);
+		if(!validationErrors.isEmpty()) {
+			throw new VendorValidationException(validationErrors.toString());
+		}
+		
 		vendorToUpdate.setStreetAddress(updatedVendor.getStreetAddress());
 		vendorToUpdate.setCity(updatedVendor.getCity());
 		vendorToUpdate.setStateAbbr(updatedVendor.getStateAbbr());
 		vendorToUpdate.setZipCode(updatedVendor.getZipCode());
-		vendorToUpdate.setPhoneNumber(vendorToUpdate.getPhoneNumber());
+		vendorToUpdate.setPhoneNumber(updatedVendor.getPhoneNumber());
 		vendorToUpdate.setPhoneType(updatedVendor.getPhoneType());
 		vendorToUpdate.setEmail(updatedVendor.getEmail());
 		vendorToUpdate.setWebsite(updatedVendor.getWebsite());
@@ -93,6 +95,12 @@ public class VendorService {
 		if(vendorRepository.findByVendorName(vendor.getVendorName()) != null) {
 			validationErrors.add("A vendor by that name already exists.  Cannot create a new vendor.");
 		}
+		validationErrors.addAll(validateVendorFields(vendor));
+		return validationErrors;
+	}
+	
+	private List<String> validateVendorFields(Vendor vendor) {
+		List<String> validationErrors = new ArrayList<>();
 		if(vendor.getZipCode()!= null && !ValidationConstants.zipCodePattern.matcher(vendor.getZipCode()).matches()) {
 			validationErrors.add("Zip Code does not match valid zip code pattern.");
 		}

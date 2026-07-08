@@ -74,17 +74,17 @@ public class GlobalExceptionHandler {
 	}
 	
 	@ExceptionHandler(ScoreValidationException.class)
-	public ResponseEntity<String> handleScoreValidationException(CollaborationValidationException ex) {
+	public ResponseEntity<String> handleScoreValidationException(ScoreValidationException ex) {
 		return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
 	}
 	
 	@ExceptionHandler(VendorNotFoundException.class)
-	public ResponseEntity<String> handleVendorNotFoundException(CollaborationNotFoundException ex) {
+	public ResponseEntity<String> handleVendorNotFoundException(VendorNotFoundException ex) {
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
 	}
 	
 	@ExceptionHandler(VendorValidationException.class)
-	public ResponseEntity<String> handleVendorValidationException(CollaborationValidationException ex) {
+	public ResponseEntity<String> handleVendorValidationException(VendorValidationException ex) {
 		return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
 	}
 	
