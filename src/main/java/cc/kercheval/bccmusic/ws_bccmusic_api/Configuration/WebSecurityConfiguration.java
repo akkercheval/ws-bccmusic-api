@@ -11,6 +11,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfFilter;
 import org.springframework.web.cors.CorsConfiguration;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Enum.Role;
@@ -29,7 +31,13 @@ public class WebSecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
+            .csrf(csrf -> csrf
+                .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                .ignoringRequestMatchers("/perform_login", "/logout", "/accounts")
+            )
+            
+            .addFilterAfter(new CsrfCookieFilter(), CsrfFilter.class)
             
             .cors(cors -> cors.configurationSource(s -> {
                 CorsConfiguration config = new CorsConfiguration();
@@ -62,7 +70,7 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.GET, "/arrangement-types").authenticated()
                 .requestMatchers(HttpMethod.GET, "/composers").authenticated()
                 .requestMatchers(HttpMethod.GET, "/composers/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/composers").authenticated()	//.hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
+                .requestMatchers(HttpMethod.POST, "/composers").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/composers").hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
                 .requestMatchers(HttpMethod.GET, "/score-tags").authenticated()
                 .requestMatchers("/scores/**").authenticated()
