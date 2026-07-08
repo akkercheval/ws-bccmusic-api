@@ -13,11 +13,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Medley {
-	Long medleyId;
+	private Long medleyId;
 	@NotNull
-	Long scoreId;
+	private Long scoreId;
 	@NotBlank
-	String pieceTitle;
+	private String pieceTitle;
 	@NotNull
-	Composer composer;
+	private Composer composer;
 }

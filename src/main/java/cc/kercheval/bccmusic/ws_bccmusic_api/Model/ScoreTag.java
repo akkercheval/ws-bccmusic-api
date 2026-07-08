@@ -13,9 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ScoreTag {
-	String scoreTagId;
+	private Long scoreTagId;
 	@NotNull
-	Long scoreId;
+	private Long scoreId;
 	@NotBlank
-	String tag;	
+	private String tag;	
 }

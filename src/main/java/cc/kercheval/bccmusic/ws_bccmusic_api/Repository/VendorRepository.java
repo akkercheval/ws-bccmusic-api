@@ -2,12 +2,12 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Repository;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Vendor;
 
-public interface VendorRepository extends CrudRepository<Vendor, Long> {
+public interface VendorRepository extends JpaRepository<Vendor, Long> {
 
 	public Vendor findByVendorId(Long vendorId);
 	

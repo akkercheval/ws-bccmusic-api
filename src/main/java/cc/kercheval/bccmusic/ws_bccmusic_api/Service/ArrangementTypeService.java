@@ -18,9 +18,6 @@ public class ArrangementTypeService {
 	private final ArrangementTypeRepository arrangementTypeRepository;
 	
 	public List<ArrangementType> getArrangementTypes() {
-		Iterable<ArrangementType> arrangementTypes = arrangementTypeRepository.findAll();
-		
-		return StreamSupport.stream(arrangementTypes.spliterator(), false)
-                .collect(Collectors.toList());
+		return arrangementTypeRepository.findAll();
 	}
 }

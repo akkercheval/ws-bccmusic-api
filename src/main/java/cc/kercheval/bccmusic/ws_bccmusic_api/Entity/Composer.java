@@ -27,6 +27,16 @@ public class Composer {
 	String lastName;
 	
 	@Transient
-	@Column(name="full_name", length=152, nullable=false)
 	String fullName;
+
+	public String getFullName() {
+		if(fullName != null && !fullName.isBlank()) {
+			return fullName;
+		}
+		StringBuilder fullNameBuilder = new StringBuilder();
+		fullNameBuilder.append(firstName != null? firstName + " " : "");
+		fullNameBuilder.append(middleName != null? middleName + " ": "");
+		fullNameBuilder.append(lastName);
+		return fullNameBuilder.toString();
+	}
 }

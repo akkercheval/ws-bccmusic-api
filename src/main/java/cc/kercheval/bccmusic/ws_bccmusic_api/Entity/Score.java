@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.SQLRestriction;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -25,6 +26,7 @@ import lombok.Setter;
 @Setter
 @Entity(name="Score")
 @DynamicUpdate
+@SQLRestriction("deleted_at IS NULL")
 public class Score extends AuditEntity {
 	
 	@Id

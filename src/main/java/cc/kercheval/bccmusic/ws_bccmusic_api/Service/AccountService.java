@@ -36,8 +36,7 @@ public class AccountService {
 	}
 	
 	public List<Account> getAllAccounts() {
-		return  StreamSupport.stream(accountRepository.findAll().spliterator(), false)
-				.collect(Collectors.toList());
+		return accountRepository.findAll();
 	}
 	
 	public Account createAccount(Account account) throws AccountValidationException {

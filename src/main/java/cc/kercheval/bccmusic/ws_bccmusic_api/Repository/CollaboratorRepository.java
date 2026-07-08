@@ -3,14 +3,14 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Collaborator;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationAccount;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo;
 
-public interface CollaboratorRepository extends CrudRepository<Collaborator, Long> {
+public interface CollaboratorRepository extends JpaRepository<Collaborator, Long> {
 	
 	public Optional<Collaborator> findByOwnerAccountIdAndCollaboratorAccountId(Long ownerAccountId, Long collaboratorAccountId);
 	

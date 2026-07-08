@@ -25,8 +25,7 @@ public class VendorService {
 	private final VendorRepository vendorRepository;
 	
 	public List<Vendor> getAllVendors() {
-		return StreamSupport.stream(vendorRepository.findAll().spliterator(), false)
-				.collect(Collectors.toList());
+		return vendorRepository.findAll();
 	}
 	
 	public Vendor getVendorById(Long vendorId) throws VendorNotFoundException {

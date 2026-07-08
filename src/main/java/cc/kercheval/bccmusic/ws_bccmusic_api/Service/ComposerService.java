@@ -23,7 +23,7 @@ public class ComposerService {
 	}
 
 	public List<Composer> getAllComposers() {
-		return StreamSupport.stream(composerRepository.findAll().spliterator(), false).toList();
+		return composerRepository.findAll();
 	}
 
 	public Composer createComposer(Composer newComposerEntity) {
