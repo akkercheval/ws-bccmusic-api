@@ -3,10 +3,7 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Service;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -91,17 +88,22 @@ public class AccountService {
 		return accountRepository.findByUsername(username);
 	}
 	
-	public String updatePassword(Long accountId, String updatedPassword) throws AccountValidationException {
+	public String updatePassword(Long accountId, String updatedPassword) throws AccountValidationException, AccountNotFoundException {
+		List<String> passwordErrors = ValidationConstants.validatePassword(updatedPassword);
+		if (!passwordErrors.isEmpty()) {
+			throw new AccountValidationException(passwordErrors);
+		}
+
 		Account currentAccount = accountRepository.getAccountByAccountId(accountId);
 		if(currentAccount == null) {
-			ResponseEntity.notFound().build();
+			throw new AccountNotFoundException("Account not found with id: " + accountId);
 		}
-		String newHashedPassword = passwordEncoder.encode(updatedPassword);
-		if(newHashedPassword.equals(currentAccount.getHashedPassword())) {
-			throw new AccountValidationException(List.of("Cannot update password.  New password matches previous password."));
+
+		if(passwordEncoder.matches(updatedPassword, currentAccount.getHashedPassword())) {
+			throw new AccountValidationException(List.of("Cannot update password. New password matches previous password."));
 		}
 		
-		currentAccount.setHashedPassword(newHashedPassword);
+		currentAccount.setHashedPassword(passwordEncoder.encode(updatedPassword));
 		accountRepository.save(currentAccount);
 		
 		return "Password successfully updated for username: " + currentAccount.getUsername();
@@ -111,6 +113,8 @@ public class AccountService {
 		List<String> validationErrors = new ArrayList<>();
 		if (account.getHashedPassword() == null || account.getHashedPassword().isEmpty()) {
 	        validationErrors.add("Password is required");
+	    } else {
+	    	validationErrors.addAll(ValidationConstants.validatePassword(account.getHashedPassword()));
 	    }
 		
 		int existingAccounts = accountRepository.countUsername(account.getUsername());

@@ -74,7 +74,7 @@ public class AccountController {
 	
 	@PatchMapping(value = "/{accountId}/password")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
-	public String updatePassword(@PathVariable Long accountId, @RequestParam(required = true) String updatedPassword, Principal principal) throws AccountValidationException {
+	public String updatePassword(@PathVariable Long accountId, @RequestParam(required = true) String updatedPassword, Principal principal) throws AccountValidationException, AccountNotFoundException {
 		Long accountToUpdate = getAccountFromPrincipal(principal);
 		
 		if(accountId != accountToUpdate) {

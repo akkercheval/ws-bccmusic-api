@@ -1,5 +1,6 @@
 package cc.kercheval.bccmusic.ws_bccmusic_api.util;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ValidationConstants {
@@ -8,4 +9,8 @@ public class ValidationConstants {
 			+ "HI|ID|IL|IN|IA|KS|KY|LA|ME|MH|MD|MA|MI|MN|MS|MO|MT|NE|\r\n"
 			+ "NV|NH|NJ|NM|NY|NC|ND|MP|OH|OK|OR|PW|PA|PR|RI|SC|SD|TN|\r\n"
 			+ "TX|UT|VT|VI|VA|WA|WV|WI|WY)$");
+
+	public static List<String> validatePassword(String password) {
+		return PasswordValidator.validate(password);
+	}
 }
