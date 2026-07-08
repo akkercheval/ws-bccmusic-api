@@ -6,7 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +30,6 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @RequiredArgsConstructor
 public class CollaboratorService {
-	private final ModelMapper modelMapper;
 	private final CollaboratorRepository collaboratorRepository;
 	private final AccountService accountService;
 	private final AccountRepository accountRepository;
@@ -57,9 +55,9 @@ public class CollaboratorService {
 	        .orElseThrow(() -> new AccountNotFoundException("Collaborator not found"));
 	    
 	    if(owner.getUsername().equals(currentUsername)) {
-	    	granter=owner;
+	    	granter = owner;
 	    } else {
-	    	granter=accountRepository.findByUsername(currentUsername);
+	    	granter = accountRepository.findByUsername(currentUsername);
 	    }
 		
 		Collaborator newCollaborator = new Collaborator();
@@ -98,10 +96,10 @@ public class CollaboratorService {
 		}
 		
 		collaboratorEntity.setPermissionLevel(updatedCollaborator.getPermissionLevel());
-		collaboratorEntity.setGrantedBy(modelMapper.map(updatedCollaborator.getGrantedBy(), Account.class));
+		collaboratorEntity.setGrantedBy(updatedCollaborator.getGrantedBy());
 		collaboratorEntity.setGrantedAt(LocalDateTime.now());
 		
-		return modelMapper.map(collaboratorRepository.save(collaboratorEntity), Collaborator.class);
+		return collaboratorRepository.save(collaboratorEntity);
 	}
 	
 	@Transactional
@@ -126,7 +124,7 @@ public class CollaboratorService {
 	public List<CollaborationInfo> getMyAllowedOwnerAccounts(Account myAccount) {
 		log.info("Getting My Allowed Owner Accounts for: {}", myAccount.getAccountName());
 	    String myType = myAccount.getAccountType().name();
-    	List<CollaborationInfo> collaborationInfos = new ArrayList<CollaborationInfo>();
+    	List<CollaborationInfo> collaborationInfos = new ArrayList<>();
 
 	    if (myType.equals(Role.ADMINISTRATOR.name())) {
 	    	List<Account> allOwners = accountService.findAllOwners();
@@ -142,7 +140,7 @@ public class CollaboratorService {
 	    	        CollaborationInfo::getOwnerAccountName,
 	    	        String.CASE_INSENSITIVE_ORDER
 	    	    ));
-	    	log.info("CollaborationInfos: {}", collaborationInfos.toString());
+	    	log.info("CollaborationInfos: {}", collaborationInfos);
 	    	return collaborationInfos;
 	    }
 
@@ -158,9 +156,10 @@ public class CollaboratorService {
 	    ));
 
 	    collaborationInfos.addAll(myCollabInfos);
-	    log.info("CollaborationInfos: {}", collaborationInfos.toString());
+	    log.info("CollaborationInfos: {}", collaborationInfos);
 	    return collaborationInfos;
 	}
+
 	public List<Account> getAvailableCollaborators(Account account) {
 		return accountRepository.findAvailableCollaborators(account.getAccountId());
 	}

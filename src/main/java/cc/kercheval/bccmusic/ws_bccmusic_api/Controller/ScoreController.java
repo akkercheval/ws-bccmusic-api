@@ -2,10 +2,7 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.ScoreMapper;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.MusicScore;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.ScoreService;
@@ -42,24 +40,17 @@ public class ScoreController {
 	
 	private final ScoreService scoreService;
 	private final AccountService accountService;
-	private final ModelMapper modelMapper;
+	private final ScoreMapper scoreMapper;
 	private final CollaboratorPermissionEvaluator permissionEvaluator;
 	
 	@GetMapping
 	public List<MusicScore> getAllScores() {
-		List<Score> allScores = scoreService.getAllScores();
-		
-		List<MusicScore> allMusicScores = 
-		StreamSupport.stream(allScores.spliterator(), false)
-        .map(s -> modelMapper.map(s, MusicScore.class))
-        .toList();
-		return allMusicScores;
+		return scoreMapper.toDtoList(scoreService.getAllScores());
 	}
 	
 	@GetMapping(value = "/{scoreId}")
 	public MusicScore getScoreById(@PathVariable Long scoreId) {
-		
-		return modelMapper.map(scoreService.getScoreById(scoreId), MusicScore.class);
+		return scoreMapper.toDto(scoreService.getScoreById(scoreId));
 	}
 	
 	@GetMapping(value = "/search")
@@ -69,45 +60,41 @@ public class ScoreController {
 	        @RequestParam(required = false) Long accountId,
 	        @PageableDefault(size = 25, sort = "scoreTitle") Pageable pageable) {
 		Page<Score> pageableScore = scoreService.searchScore(title, tags, accountId, pageable);
-		return pageableScore.map(s -> modelMapper.map(s, MusicScore.class));
+		return pageableScore.map(scoreMapper::toDto);
 	}
 	
 	@GetMapping("/other-scores")
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasViewScoresPermission(#accountId, authentication)")
 	public List<MusicScore> getScoresByAccountId(@RequestParam(required = true) Long accountId, Principal principal) {
-	
 		return scoreService.getScoresByAccountId(accountId).stream()
-				.map(s ->
-				modelMapper.map(s, MusicScore.class))
-			.collect(Collectors.toList());
+				.map(scoreMapper::toDto)
+				.toList();
 	}
 	
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasBasicEditScoresPermission(#score.owner.accountId, authentication)")
 	public MusicScore createScore(@Valid @RequestBody MusicScore score, Principal principal) {
-		log.info("Creating new music score: {}", score.toString());
-		Score newScore = modelMapper.map(score, Score.class);
+		log.info("Creating new music score: {}", score.getScoreTitle());
+		Score newScore = scoreMapper.toEntity(score);
 		Account editorAccount = getAccountFromPrincipal(principal);
 				
-		return modelMapper.map(scoreService.createScore(newScore, editorAccount), MusicScore.class);
+		return scoreMapper.toDto(scoreService.createScore(newScore, editorAccount));
 	}
 	
 	@PutMapping("/{scoreId}")
 	public MusicScore updateScore(@PathVariable Long scoreId, @Valid @RequestBody MusicScore score, Authentication authentication, Principal principal) {
-		
 		if (!scoreId.equals(score.getScoreId())) {
             throw new IllegalArgumentException("Score ID in path must match body");
 		}
-		Score scoreToBeDeleted = scoreService.getScoreById(scoreId);
-		if(!permissionEvaluator.hasBasicEditScoresPermission(scoreToBeDeleted.getOwner().getAccountId(), authentication)) {
-			throw new AccessDeniedException("User does not have permission to delete score.");
+		Score existingScore = scoreService.getScoreById(scoreId);
+		if(!permissionEvaluator.hasBasicEditScoresPermission(existingScore.getOwner().getAccountId(), authentication)) {
+			throw new AccessDeniedException("User does not have permission to edit score.");
 		}
-		Score scoreEntity = modelMapper.map(score, Score.class);
+		Score scoreEntity = scoreMapper.toEntity(score);
 		Account editorAccount = getAccountFromPrincipal(principal);
-		System.out.println("Medleys to Save: " + scoreEntity.getMedleys().toString());
 		
-		return modelMapper.map(scoreService.updateScore(scoreEntity, editorAccount), MusicScore.class);
+		return scoreMapper.toDto(scoreService.updateScore(scoreEntity, editorAccount));
 	}
 	
 	@DeleteMapping("/{scoreId}")

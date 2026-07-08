@@ -21,7 +21,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.modelmapper.ModelMapper;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Collaborator;
@@ -36,9 +35,6 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.CollaboratorRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CollaboratorServiceTest {
-	@Mock
-	private ModelMapper modelMapper;
-	
 	@Mock
 	private CollaboratorRepository collaboratorRepository;
 	

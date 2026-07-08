@@ -17,90 +17,74 @@ import jakarta.validation.ConstraintViolationException;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<String> handleAccessDenied(AccessDeniedException ex) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.FORBIDDEN, "Access denied", ex.getMessage(), request);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<String> handleValidation(ConstraintViolationException ex) {
-        return ResponseEntity.badRequest().body("Validation failed: " + ex.getMessage());
-    }    
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        List<String> details = ex.getConstraintViolations().stream()
+                .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                .toList();
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", details, request);
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<String> handleNotFound(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Not found", ex.getMessage(), request);
     }
-    
+
     @ExceptionHandler(AccountValidationException.class)
-    public ResponseEntity<ValidationErrorResponse> handleValidationErrors(
-            AccountValidationException ex,
-            HttpServletRequest request) {
-
-        ValidationErrorResponse response = new ValidationErrorResponse(
-            HttpStatus.BAD_REQUEST.value(),
-            "Validation failed",
-            ex.getErrors(),
-            request.getRequestURI(),
-            LocalDateTime.now()
-        );
-
-        return ResponseEntity.badRequest().body(response);
+    public ResponseEntity<ErrorResponse> handleAccountValidation(AccountValidationException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Validation failed", ex.getErrors(), request);
     }
-	
-	@ExceptionHandler(CollaborationAlreadyExistsException.class)
-    public ResponseEntity<ErrorResponse> handleCollaborationAlreadyExists(
-            CollaborationAlreadyExistsException ex, 
-            HttpServletRequest request) {
 
-        ErrorResponse error = new ErrorResponse(
-            HttpStatus.CONFLICT.value(),
-            "Collaboration already exists",
-            ex.getMessage(),
-            request.getRequestURI(),
-            LocalDateTime.now()
-        );
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    @ExceptionHandler(CollaborationAlreadyExistsException.class)
+    public ResponseEntity<ErrorResponse> handleCollaborationAlreadyExists(CollaborationAlreadyExistsException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.CONFLICT, "Collaboration already exists", ex.getMessage(), request);
     }
-	
-	@ExceptionHandler(CollaborationNotFoundException.class)
-	public ResponseEntity<String> handleCollaborationNotFoundException(CollaborationNotFoundException ex) {
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-	
-	@ExceptionHandler(CollaborationValidationException.class)
-	public ResponseEntity<String> handleCollaborationValidationException(CollaborationValidationException ex) {
-		return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-	}
-	
-	@ExceptionHandler(ScoreValidationException.class)
-	public ResponseEntity<String> handleScoreValidationException(ScoreValidationException ex) {
-		return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-	}
-	
-	@ExceptionHandler(VendorNotFoundException.class)
-	public ResponseEntity<String> handleVendorNotFoundException(VendorNotFoundException ex) {
-		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-	}
-	
-	@ExceptionHandler(VendorValidationException.class)
-	public ResponseEntity<String> handleVendorValidationException(VendorValidationException ex) {
-		return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNPROCESSABLE_ENTITY);
-	}
-	
-	public record ErrorResponse(
-	        int status,
-	        String error,
-	        String message,
-	        String path,
-	        LocalDateTime timestamp
-	    ) {}
-	
-    public record ValidationErrorResponse(
-        int status,
-        String error,
-        List<String> details,
-        String path,
-        LocalDateTime timestamp
-    ) {}
+
+    @ExceptionHandler(CollaborationNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCollaborationNotFound(CollaborationNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Collaboration not found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(CollaborationValidationException.class)
+    public ResponseEntity<ErrorResponse> handleCollaborationValidation(CollaborationValidationException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(ScoreValidationException.class)
+    public ResponseEntity<ErrorResponse> handleScoreValidation(ScoreValidationException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(VendorNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleVendorNotFound(VendorNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Vendor not found", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(VendorValidationException.class)
+    public ResponseEntity<ErrorResponse> handleVendorValidation(VendorValidationException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNPROCESSABLE_ENTITY, "Validation failed", ex.getMessage(), request);
+    }
+
+    @ExceptionHandler(AccountNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAccountNotFound(AccountNotFoundException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.NOT_FOUND, "Account not found", ex.getMessage(), request);
+    }
+
+    // --- Helper methods ---
+
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String error, String message, HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                status.value(), error, message, request.getRequestURI(), LocalDateTime.now());
+        return ResponseEntity.status(status).body(body);
+    }
+
+    private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String error, List<String> details, HttpServletRequest request) {
+        ErrorResponse body = new ErrorResponse(
+                status.value(), error, details, request.getRequestURI(), LocalDateTime.now());
+        return ResponseEntity.status(status).body(body);
+    }
 }

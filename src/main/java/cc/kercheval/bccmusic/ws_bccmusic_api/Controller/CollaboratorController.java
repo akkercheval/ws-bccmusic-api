@@ -3,7 +3,6 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 import java.security.Principal;
 import java.util.List;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -19,6 +18,8 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.CollaborationValidationException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.AccountMapper;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.CollaboratorMapper;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.AccountInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.CollaborationInfo;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Collaborator;
@@ -37,7 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 public class CollaboratorController {
 	
 	private final CollaboratorService collaboratorService;
-	private final ModelMapper modelMapper;
+	private final CollaboratorMapper collaboratorMapper;
+	private final AccountMapper accountMapper;
 	private final AccountService accountService;
 	private final CollaboratorPermissionEvaluator collaboratorPermissionEvaluator;
 	
@@ -56,13 +58,12 @@ public class CollaboratorController {
 		}
 		log.info("My AccountId: {}", myAccount.getAccountId());
 		return collaboratorService.getMyCollaborators(myAccount.getAccountId()).stream()
-				.map(collaborator -> modelMapper.map(collaborator, Collaborator.class))
+				.map(collaboratorMapper::toDto)
 				.toList();
 	}
 	
 	@GetMapping("/myAllowedOwners")
 	public List<CollaborationInfo> getMyAllowedOwners(Principal principal) throws AccountNotFoundException {
-		
 		return collaboratorService.getMyAllowedOwnerAccounts(getAccountFromPrincipal(principal));
 	}
 	
@@ -71,32 +72,31 @@ public class CollaboratorController {
 		log.info("Collaborator Id to find: {}", collaboratorId);
 		if(collaboratorId == null)
 			return null;
-		return modelMapper.map(collaboratorService.getCollaborator(collaboratorId), Collaborator.class);
+		return collaboratorMapper.toDto(collaboratorService.getCollaborator(collaboratorId));
 	}
-	
 	
 	@GetMapping("/available-collaborators")
 	public List<AccountInfo> getAvailableCollaborators(Principal principal) {
 		List<Account> availableAccounts = collaboratorService.getAvailableCollaborators(getAccountFromPrincipal(principal));
 		return availableAccounts.stream()
-				.map(account ->	modelMapper.map(account, AccountInfo.class))
+				.map(accountMapper::toAccountInfo)
 				.toList();
 	}
 	
 	@PostMapping
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasEditCollaboratorPermission(#request.ownerAccountId, authentication)")
 	public Collaborator addCollaborator(@Valid @RequestBody CollaboratorRequest request, Principal principal) throws AccountValidationException, AccountNotFoundException {
-	    return modelMapper.map(
-	        collaboratorService.addNewCollaborator(request, principal.getName()), 
-	        Collaborator.class
+	    return collaboratorMapper.toDto(
+	        collaboratorService.addNewCollaborator(request, principal.getName())
 	    );
 	}
 	
 	@PutMapping("/{collaboratorId}")
 	@PreAuthorize("@collaboratorPermissionEvaluator.hasEditCollaboratorPermission(#collaborator.owner.accountId, authentication)")
 	public Collaborator updateCollaborator(@Valid @RequestBody Collaborator collaborator) {
-	    return modelMapper.map(collaboratorService.updateCollaborator(
-	    		modelMapper.map(collaborator, cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Collaborator.class)), Collaborator.class);
+	    return collaboratorMapper.toDto(
+	        collaboratorService.updateCollaborator(collaboratorMapper.toEntity(collaborator))
+	    );
 	}
 	
 	@DeleteMapping("/{collaboratorId}")

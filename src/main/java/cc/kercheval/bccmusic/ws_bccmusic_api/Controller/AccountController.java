@@ -2,9 +2,7 @@ package cc.kercheval.bccmusic.ws_bccmusic_api.Controller;
 
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.StringUtils;
@@ -20,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountNotFoundException;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Exception.AccountValidationException;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.AccountMapper;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
 import jakarta.validation.Valid;
@@ -33,47 +32,44 @@ import lombok.extern.slf4j.Slf4j;
 public class AccountController {
 	
 	private final AccountService accountService;
-	private final ModelMapper modelMapper;
+	private final AccountMapper accountMapper;
 	private final PasswordEncoder passwordEncoder;
 
 	@GetMapping(value = "/{accountId}")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
 	public Account getAccount(@PathVariable Long accountId) {
-		
-		Account account = modelMapper.map(accountService.getAccountById(accountId), Account.class);
-		return account;		
+		return accountMapper.toDto(accountService.getAccountById(accountId));
 	}
 	
 	@GetMapping
 	@PreAuthorize("hasRole('ADMINISTRATOR')")
 	public List<Account> getAllAccounts() {
 		return accountService.getAllAccounts().stream()
-				.map(a -> 
-				modelMapper.map(a, Account.class))
-				.collect(Collectors.toList());
+				.map(accountMapper::toDto)
+				.toList();
 	}
 	
 	@PostMapping
 	public Account createNewAccount(@Valid @RequestBody Account newAccount) throws AccountValidationException, AccountNotFoundException {
 		log.info("Creating New account: {}", newAccount.getUsername());
 		
-		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account newAccountEntity = modelMapper.map(newAccount, cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account.class);
+		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account newAccountEntity = accountMapper.toEntity(newAccount);
 		if (StringUtils.hasText(newAccount.getPassword())) {
 			newAccountEntity.setHashedPassword(passwordEncoder.encode(newAccount.getPassword()));
 	    } else {
 	        throw new IllegalArgumentException("Password is required");
 	    }
-		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account createdAccount =  accountService.createAccount(newAccountEntity);
+		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account createdAccount = accountService.createAccount(newAccountEntity);
 		log.info("Successfully created AccountId: {} for username: {}", createdAccount.getAccountId(), createdAccount.getUsername());
 		
-		return modelMapper.map(createdAccount, Account.class);
+		return accountMapper.toDto(createdAccount);
 	}
 	
 	@PutMapping(value="/{accountId}")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
 	public Account updateAccount(@Valid @RequestBody Account updatedAccount) throws AccountValidationException, AccountNotFoundException {
-		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account updatedEntity = accountService.updateAccount(modelMapper.map(updatedAccount, cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account.class));
-		return modelMapper.map(updatedEntity, Account.class);
+		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account updatedEntity = accountService.updateAccount(accountMapper.toEntity(updatedAccount));
+		return accountMapper.toDto(updatedEntity);
 	}
 	
 	@PatchMapping(value = "/{accountId}/password")
@@ -91,5 +87,4 @@ public class AccountController {
 	private Long getAccountFromPrincipal(Principal principal) {
 		return accountService.findByUsername(principal.getName()).getAccountId();
 	}
-
 }

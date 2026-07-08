@@ -6,7 +6,6 @@ import org.hibernate.validator.constraints.URL;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;

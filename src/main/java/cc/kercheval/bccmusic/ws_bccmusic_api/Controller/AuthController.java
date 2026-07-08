@@ -5,13 +5,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.AccountMapper;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Service.AccountService;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 	
 	private final AccountService accountService;
-	private final ModelMapper modelMapper;
+	private final AccountMapper accountMapper;
 
     @GetMapping("/me")
     public Map<String, Object> getCurrentUser(Authentication authentication) {
@@ -34,7 +34,7 @@ public class AuthController {
         }
 
         String username = authentication.getName();
-        Account account = modelMapper.map(accountService.findByUsername(username), Account.class);
+        Account account = accountMapper.toDto(accountService.findByUsername(username));
 
         if (account == null) {
         	response.put("authenticated", false);
@@ -56,7 +56,7 @@ public class AuthController {
     }
 
     @GetMapping("/auth/status")
-    public Map<String, Object>  authStatus(Authentication authentication) {
+    public Map<String, Object> authStatus(Authentication authentication) {
     	Map<String, Object> response = new HashMap<>();
         if (authentication != null && authentication.isAuthenticated()) {           
             response.put("authenticated", true);

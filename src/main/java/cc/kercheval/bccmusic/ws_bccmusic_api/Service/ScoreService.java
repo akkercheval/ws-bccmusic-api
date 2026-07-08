@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -22,6 +22,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComposer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreSpecification;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreTag;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Mapper.ScoreMapper;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.AccountRepository;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Repository.ScoreRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,7 +36,7 @@ public class ScoreService {
 	
 	private final ScoreRepository scoreRepository;
 	private final AccountRepository accountRepository;
-	private final ModelMapper modelMapper;
+	private final ScoreMapper scoreMapper;
 
 	public Score getScoreById(Long scoreId) {
 		return scoreRepository.findById(scoreId)
@@ -60,27 +61,27 @@ public class ScoreService {
 		
 		if (score.getMedleys() != null) {
 		    for (Medley medley : score.getMedleys()) {
-		      medley.setScore(score);
+		        medley.setScore(score);
 		    }
-		  }
+		}
 
-		  if (score.getParts() != null) {
+		if (score.getParts() != null) {
 		    for (Part part : score.getParts()) {
-		      part.setScore(score);
+		        part.setScore(score);
 		    }
-		  }
+		}
 		  
-		  if (score.getScoreComposers() != null) {
+		if (score.getScoreComposers() != null) {
 		    for (ScoreComposer sc : score.getScoreComposers()) {
-		      sc.setScore(score);
+		        sc.setScore(score);
 		    }
-		  }
+		}
 		  
-		  if (score.getScoreTags() != null) {
+		if (score.getScoreTags() != null) {
 		    for (ScoreTag tag : score.getScoreTags()) {
-		      tag.setScore(score);
+		        tag.setScore(score);
 		    }
-		  }		
+		}
 		
 		return scoreRepository.save(score);
 	}
@@ -97,70 +98,68 @@ public class ScoreService {
 		
 		if (score.getMedleys() != null) {
 		    for (Medley medley : score.getMedleys()) {
-		      medley.setScore(entity);
+		        medley.setScore(entity);
 		    }
-		  }
+		}
 		replaceChildCollection(
 		        score.getMedleys(),
 		        entity.getMedleys(),
 		        entity::setMedleys,
-		        modelMapper,
+		        scoreMapper::updateMedley,
 		        Medley::getMedleyId
-		    );
+		);
 		
-		  if (score.getParts() != null) {
+		if (score.getParts() != null) {
 		    for (Part part : score.getParts()) {
-		      part.setScore(entity);
+		        part.setScore(entity);
 		    }
-		  }
-		  replaceChildCollection(
-			        score.getParts(),
-			        entity.getParts(),
-			        entity::setParts,
-			        modelMapper,
-			        Part::getPartId
-			    );
+		}
+		replaceChildCollection(
+		        score.getParts(),
+		        entity.getParts(),
+		        entity::setParts,
+		        scoreMapper::updatePart,
+		        Part::getPartId
+		);
 		  
-		  if (score.getScoreComposers() != null) {
-		        for (ScoreComposer sc : score.getScoreComposers()) {
-		            sc.setScore(entity);
-		        }
+		if (score.getScoreComposers() != null) {
+		    for (ScoreComposer sc : score.getScoreComposers()) {
+		        sc.setScore(entity);
 		    }
-		  replaceChildCollection(
-				  score.getScoreComposers(),
-				  entity.getScoreComposers(),
-				  entity::setScoreComposers,
-				  modelMapper,
-				  ScoreComposer::getScoreComposerId
-				  );
+		}
+		replaceChildCollection(
+		        score.getScoreComposers(),
+		        entity.getScoreComposers(),
+		        entity::setScoreComposers,
+		        scoreMapper::updateScoreComposer,
+		        ScoreComposer::getScoreComposerId
+		);
 		  
-		  if (score.getScoreTags() != null) {
+		if (score.getScoreTags() != null) {
 		    for (ScoreTag tag : score.getScoreTags()) {
-		      tag.setScore(entity);
+		        tag.setScore(entity);
 		    }
-		  }	
-		  replaceChildCollection(
-			        score.getScoreTags(),
-			        entity.getScoreTags(),
-			        entity::setScoreTags,
-			        modelMapper,
-			        ScoreTag::getScoreTagId
-			    );
+		}
+		replaceChildCollection(
+		        score.getScoreTags(),
+		        entity.getScoreTags(),
+		        entity::setScoreTags,
+		        scoreMapper::updateScoreTag,
+		        ScoreTag::getScoreTagId
+		);
 
-		  entity.setPurchasedCost(score.getPurchasedCost());
-		  entity.setPurchasedDate(score.getPurchasedDate());
-		  entity.setPurchasedFrom(score.getPurchasedFrom());
-		  entity.setScoreSubtitle(score.getScoreSubtitle());
-		  entity.setScoreTitle(score.getScoreTitle());	  
-		  
-		  System.out.println("Medley Collection to Save: " + entity.getMedleys().toString());
+		entity.setPurchasedCost(score.getPurchasedCost());
+		entity.setPurchasedDate(score.getPurchasedDate());
+		entity.setPurchasedFrom(score.getPurchasedFrom());
+		entity.setScoreSubtitle(score.getScoreSubtitle());
+		entity.setScoreTitle(score.getScoreTitle());
 
 		return scoreRepository.save(entity);
 	}
 
 	public Page<Score> searchScore(String title, List<String> tags, Long accountId, Pageable pageable) {
 	    if ((title == null || title.isBlank()) 
-	            && (tags == null || tags.size() == 0) 
+	            && (tags == null || tags.isEmpty()) 
 	            && accountId == null) {
 	        return scoreRepository.findAll(pageable);
 	    }
@@ -179,18 +178,16 @@ public class ScoreService {
 	        specs.add(ScoreSpecification.hasOwner(accountId));
 	    }
 
-	    Specification<Score> combinedSpec = Specification.allOf(specs);		
-	    
-	    return scoreRepository.findAll(combinedSpec, pageable);	    
+	    Specification<Score> combinedSpec = Specification.allOf(specs);
+	    return scoreRepository.findAll(combinedSpec, pageable);
 	}
 
-	
 	public void deleteScore(Long scoreId, String userName) {
 		Score entity = scoreRepository.findById(scoreId)
 		        .orElseThrow(() -> new EntityNotFoundException("Score not found"));
 		
 		Account account = accountRepository.findByUsername(userName);
-		if(account == null) throw new EntityNotFoundException("User not found.  Cannot delete score: " + scoreId);
+		if (account == null) throw new EntityNotFoundException("User not found.  Cannot delete score: " + scoreId);
 		
 		entity.setDeletedAt(LocalDateTime.now());
 		entity.setDeletedBy(account);
@@ -202,7 +199,7 @@ public class ScoreService {
 	        List<T> incoming,
 	        List<T> current,
 	        Consumer<List<T>> setter,
-	        ModelMapper mapper,
+	        BiConsumer<T, T> updater,
 	        Function<T, Object> idExtractor) {
 
 	    if (incoming == null) {
@@ -234,7 +231,7 @@ public class ScoreService {
 	        }
 
 	        if (existing != null) {
-	            mapper.map(inc, existing);
+	            updater.accept(existing, inc);
 	        } else {
 	            current.add(inc);
 	        }
