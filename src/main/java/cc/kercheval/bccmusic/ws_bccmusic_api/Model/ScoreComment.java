@@ -21,9 +21,11 @@ public class ScoreComment {
     @NotBlank
     private String comment;
     private Long createdByAccountId;
+    private String createdByAccountName;
     private String createdByUsername;
     private LocalDateTime createdAt;
     private Long updatedByAccountId;
+    private String updatedByAccountName;
     private String updatedByUsername;
     private LocalDateTime updatedAt;
 }

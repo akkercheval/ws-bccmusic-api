@@ -60,8 +60,10 @@ public interface ScoreMapper {
 
     @Mapping(target = "scoreId", source = "score.scoreId")
     @Mapping(target = "createdByAccountId", source = "createdBy.accountId")
+    @Mapping(target = "createdByAccountName", source = "createdBy.accountName")
     @Mapping(target = "createdByUsername", source = "createdBy.username")
     @Mapping(target = "updatedByAccountId", source = "updatedBy.accountId")
+    @Mapping(target = "updatedByAccountName", source = "updatedBy.accountName")
     @Mapping(target = "updatedByUsername", source = "updatedBy.username")
     cc.kercheval.bccmusic.ws_bccmusic_api.Model.ScoreComment scoreCommentToDto(ScoreComment entity);
 

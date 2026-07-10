@@ -63,6 +63,7 @@ public class ScoreService {
 		score.setUpdatedBy(editorAccount);
 
 		linkChildrenToParent(score);
+		stampNewComments(score.getComments(), editorAccount, currentTime);
 
 		return scoreRepository.save(score);
 	}
@@ -71,6 +72,10 @@ public class ScoreService {
 	public Score updateScore(Score incoming, Account editorAccount) {
 		Score entity = scoreRepository.findById(incoming.getScoreId())
 				.orElseThrow(() -> new EntityNotFoundException("Score not found"));
+
+		LocalDateTime currentTime = LocalDateTime.now();
+		stampNewComments(incoming.getComments(), editorAccount, currentTime);
+		stampUpdatedComments(incoming.getComments(), entity.getComments(), editorAccount, currentTime);
 
 		updateScalarFields(entity, incoming, editorAccount);
 		syncChildren(incoming, entity);
@@ -189,6 +194,38 @@ public class ScoreService {
 	private <T> void setParentOnChildren(List<T> children, Consumer<T> parentLinker) {
 		if (children != null) {
 			children.forEach(parentLinker);
+		}
+	}
+
+	/**
+	 * Sets createdAt/createdBy on comments that are new (no commentId yet).
+	 */
+	private void stampNewComments(List<ScoreComment> comments, Account editor, LocalDateTime timestamp) {
+		if (comments == null) return;
+		for (ScoreComment comment : comments) {
+			if (comment.getCommentId() == null) {
+				comment.setCreatedAt(timestamp);
+				comment.setCreatedBy(editor);
+			}
+		}
+	}
+
+	/**
+	 * Sets updatedAt/updatedBy on existing comments whose text has changed.
+	 */
+	private void stampUpdatedComments(List<ScoreComment> incoming, List<ScoreComment> current, Account editor, LocalDateTime timestamp) {
+		if (incoming == null || current == null) return;
+		for (ScoreComment inc : incoming) {
+			if (inc.getCommentId() == null) continue;
+			current.stream()
+					.filter(c -> inc.getCommentId().equals(c.getCommentId()))
+					.findFirst()
+					.ifPresent(existing -> {
+						if (!existing.getComment().equals(inc.getComment())) {
+							inc.setUpdatedAt(timestamp);
+							inc.setUpdatedBy(editor);
+						}
+					});
 		}
 	}
 
