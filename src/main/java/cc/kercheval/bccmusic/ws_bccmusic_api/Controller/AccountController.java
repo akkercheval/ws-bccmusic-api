@@ -67,21 +67,33 @@ public class AccountController {
 	
 	@PutMapping(value="/{accountId}")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
-	public Account updateAccount(@Valid @RequestBody Account updatedAccount) throws AccountValidationException, AccountNotFoundException {
+	public Account updateAccount(@PathVariable Long accountId, @Valid @RequestBody Account updatedAccount) throws AccountValidationException, AccountNotFoundException {
 		cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account updatedEntity = accountService.updateAccount(accountMapper.toEntity(updatedAccount));
 		return accountMapper.toDto(updatedEntity);
 	}
 	
 	@PatchMapping(value = "/{accountId}/password")
 	@PreAuthorize("hasRole('ADMINISTRATOR') or #accountId == authentication.principal.accountId")
-	public String updatePassword(@PathVariable Long accountId, @RequestParam(required = true) String updatedPassword, Principal principal) throws AccountValidationException, AccountNotFoundException {
+	public String updatePassword(
+			@PathVariable Long accountId,
+			@RequestParam(required = true) String currentPassword,
+			@RequestParam(required = true) String updatedPassword,
+			Principal principal) throws AccountValidationException, AccountNotFoundException {
 		Long accountToUpdate = getAccountFromPrincipal(principal);
 		
 		if(accountId != accountToUpdate) {
 			throw new IllegalArgumentException("Cannot update password for another account.");
 		}
 		
-		return accountService.updatePassword(accountToUpdate, updatedPassword);		
+		return accountService.updatePassword(accountToUpdate, currentPassword, updatedPassword);		
+	}
+
+	@PatchMapping(value = "/{accountId}/role")
+	@PreAuthorize("hasRole('ADMINISTRATOR')")
+	public Account updateAccountRole(
+			@PathVariable Long accountId,
+			@RequestParam(required = true) String accountType) throws AccountNotFoundException {
+		return accountMapper.toDto(accountService.updateAccountType(accountId, accountType));
 	}
 	
 	private Long getAccountFromPrincipal(Principal principal) {

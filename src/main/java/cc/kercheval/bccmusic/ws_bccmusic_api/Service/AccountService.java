@@ -70,7 +70,8 @@ public class AccountService {
 		
 		currentAccount.setUsername(account.getUsername());
 		currentAccount.setAccountName(account.getAccountName());
-		currentAccount.setAccountType(account.getAccountType().name());
+		// AccountType is intentionally not updated here — role changes
+		// are managed through the upgrade request workflow or by an admin directly.
 		currentAccount.setStreetAddress(account.getStreetAddress());
 		currentAccount.setCity(account.getCity());
 		currentAccount.setStateAbbr(account.getStateAbbr());
@@ -88,17 +89,24 @@ public class AccountService {
 		return accountRepository.findByUsername(username);
 	}
 	
-	public String updatePassword(Long accountId, String updatedPassword) throws AccountValidationException, AccountNotFoundException {
-		List<String> passwordErrors = ValidationConstants.validatePassword(updatedPassword);
-		if (!passwordErrors.isEmpty()) {
-			throw new AccountValidationException(passwordErrors);
-		}
-
+	public String updatePassword(Long accountId, String currentPassword, String updatedPassword) throws AccountValidationException, AccountNotFoundException {
 		Account currentAccount = accountRepository.getAccountByAccountId(accountId);
 		if(currentAccount == null) {
 			throw new AccountNotFoundException("Account not found with id: " + accountId);
 		}
 
+		// Verify the current password matches what's in the database
+		if(!passwordEncoder.matches(currentPassword, currentAccount.getHashedPassword())) {
+			throw new AccountValidationException(List.of("Current password is incorrect."));
+		}
+
+		// Validate the new password
+		List<String> passwordErrors = ValidationConstants.validatePassword(updatedPassword);
+		if (!passwordErrors.isEmpty()) {
+			throw new AccountValidationException(passwordErrors);
+		}
+
+		// Ensure new password is different from current
 		if(passwordEncoder.matches(updatedPassword, currentAccount.getHashedPassword())) {
 			throw new AccountValidationException(List.of("Cannot update password. New password matches previous password."));
 		}
@@ -167,5 +175,21 @@ public class AccountService {
 
 	public List<Account> findAllOwners() {
 		return accountRepository.findByAccountType(Role.OWNER.name());
+	}
+
+	public Account updateAccountType(Long accountId, String accountType) throws AccountNotFoundException {
+		Account account = accountRepository.getAccountByAccountId(accountId);
+		if (account == null) {
+			throw new AccountNotFoundException("Cannot update role: account not found with id: " + accountId);
+		}
+
+		try {
+			Role.valueOf(accountType.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Invalid account type: " + accountType);
+		}
+
+		account.setAccountType(accountType.toUpperCase());
+		return accountRepository.save(account);
 	}
 }

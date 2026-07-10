@@ -10,6 +10,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Medley;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Part;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComment;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComposer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreTag;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Model.MusicScore;
@@ -25,6 +26,7 @@ public interface ScoreMapper {
     @Mapping(target = "parts", source = "parts")
     @Mapping(target = "scoreTags", source = "scoreTags")
     @Mapping(target = "medleys", source = "medleys")
+    @Mapping(target = "comments", source = "comments")
     MusicScore toDto(Score entity);
 
     List<MusicScore> toDtoList(List<Score> entities);
@@ -35,6 +37,7 @@ public interface ScoreMapper {
     @Mapping(target = "parts", source = "parts")
     @Mapping(target = "scoreTags", source = "scoreTags")
     @Mapping(target = "medleys", source = "medleys")
+    @Mapping(target = "comments", source = "comments")
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "deletedBy", ignore = true)
     Score toEntity(MusicScore dto);
@@ -55,6 +58,13 @@ public interface ScoreMapper {
     @Mapping(target = "composer", source = "composer")
     cc.kercheval.bccmusic.ws_bccmusic_api.Model.Medley medleyToDto(Medley entity);
 
+    @Mapping(target = "scoreId", source = "score.scoreId")
+    @Mapping(target = "createdByAccountId", source = "createdBy.accountId")
+    @Mapping(target = "createdByUsername", source = "createdBy.username")
+    @Mapping(target = "updatedByAccountId", source = "updatedBy.accountId")
+    @Mapping(target = "updatedByUsername", source = "updatedBy.username")
+    cc.kercheval.bccmusic.ws_bccmusic_api.Model.ScoreComment scoreCommentToDto(ScoreComment entity);
+
     // --- Child mappings (DTO → Entity) ---
 
     @Mapping(target = "score", ignore = true)
@@ -71,6 +81,13 @@ public interface ScoreMapper {
     @Mapping(target = "composer", source = "composer")
     Medley medleyToEntity(cc.kercheval.bccmusic.ws_bccmusic_api.Model.Medley dto);
 
+    @Mapping(target = "score", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    ScoreComment scoreCommentToEntity(cc.kercheval.bccmusic.ws_bccmusic_api.Model.ScoreComment dto);
+
     // --- Update mappings for child entities ---
 
     @Mapping(target = "score", ignore = true)
@@ -84,4 +101,9 @@ public interface ScoreMapper {
 
     @Mapping(target = "score", ignore = true)
     void updateScoreTag(@MappingTarget ScoreTag target, ScoreTag source);
+
+    @Mapping(target = "score", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    void updateScoreComment(@MappingTarget ScoreComment target, ScoreComment source);
 }

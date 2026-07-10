@@ -93,4 +93,7 @@ public class Score extends AuditEntity {
 	
 	@OneToMany(mappedBy = "score", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Medley> medleys = new ArrayList<>();
+
+	@OneToMany(mappedBy = "score", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<ScoreComment> comments = new ArrayList<>();
 }

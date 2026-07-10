@@ -36,5 +36,6 @@ public class MusicScore {
 	private List<ScoreComposer> scoreComposers;
 	private List<Part> parts;
 	private List<ScoreTag> scoreTags;
-	private List<Medley> medleys;	
+	private List<Medley> medleys;
+	private List<ScoreComment> comments;	
 }

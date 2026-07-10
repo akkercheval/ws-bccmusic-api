@@ -13,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 
 import cc.kercheval.bccmusic.ws_bccmusic_api.Enum.Role;
@@ -30,10 +31,12 @@ public class WebSecurityConfiguration {
 	
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    	CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
+    	
         http
             .csrf(csrf -> csrf
                 .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                .csrfTokenRequestHandler(handler)
                 .ignoringRequestMatchers("/perform_login", "/logout", "/accounts")
             )
             
@@ -73,6 +76,10 @@ public class WebSecurityConfiguration {
                 .requestMatchers(HttpMethod.POST, "/composers").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/composers").hasAnyAuthority(Role.OWNER.name(), Role.COLLABORATOR.name())
                 .requestMatchers(HttpMethod.GET, "/score-tags").authenticated()
+                .requestMatchers(HttpMethod.POST, "/account-upgrade-requests").authenticated()
+                .requestMatchers(HttpMethod.GET, "/account-upgrade-requests").hasRole(Role.ADMINISTRATOR.name())
+                .requestMatchers(HttpMethod.GET, "/account-upgrade-requests/my-status").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/account-upgrade-requests/*").hasRole(Role.ADMINISTRATOR.name())
                 .requestMatchers("/scores/**").authenticated()
                 .anyRequest().authenticated()
             )

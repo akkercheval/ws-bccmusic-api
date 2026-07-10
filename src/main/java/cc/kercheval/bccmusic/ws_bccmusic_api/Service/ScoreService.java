@@ -19,6 +19,7 @@ import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Account;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Medley;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Part;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.Score;
+import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComment;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreComposer;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreSpecification;
 import cc.kercheval.bccmusic.ws_bccmusic_api.Entity.ScoreTag;
@@ -138,6 +139,7 @@ public class ScoreService {
 		setParentOnChildren(score.getParts(), p -> p.setScore(score));
 		setParentOnChildren(score.getScoreComposers(), sc -> sc.setScore(score));
 		setParentOnChildren(score.getScoreTags(), t -> t.setScore(score));
+		setParentOnChildren(score.getComments(), c -> c.setScore(score));
 	}
 
 	/**
@@ -160,6 +162,10 @@ public class ScoreService {
 		syncCollection(
 				incoming.getScoreTags(), entity.getScoreTags(), entity::setScoreTags,
 				t -> t.setScore(entity), scoreMapper::updateScoreTag, ScoreTag::getScoreTagId
+		);
+		syncCollection(
+				incoming.getComments(), entity.getComments(), entity::setComments,
+				c -> c.setScore(entity), scoreMapper::updateScoreComment, ScoreComment::getCommentId
 		);
 	}
 
